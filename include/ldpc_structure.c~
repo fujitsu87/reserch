@@ -1,0 +1,162 @@
+#include  <stdlib.h>
+#include  <stdio.h>
+
+struct LIST{
+  unsigned int INDEX;
+  double VALUE;
+  struct LIST *NEXT;
+};
+
+struct LIST** LDPCInitialization(unsigned int m,struct LIST **neighbor){
+  int i;
+
+  neighbor=(struct LIST**)malloc (sizeof(struct LIST)*m);
+  if(neighbor==NULL){
+    printf("memory cannot alloc!!\n");
+    exit(1);
+  }
+
+  for(i=0;i<m;i++){
+    neighbor[i]=NULL;
+  }
+  return neighbor;
+}
+
+struct LIST *AddListEnd(struct LIST *p,unsigned int index,double value){
+
+  struct LIST *q,*tn;
+
+  if((q=(struct LIST *)malloc (sizeof(struct LIST)))==NULL){
+      printf("malloc error");
+      exit (EXIT_FAILURE);
+  }
+  q->INDEX=index;   //INDEX値を代入
+  q->VALUE=value;   //VALUE値を代入
+  q->NEXT=NULL;     //最後に付け足すから次のポインタはNULL
+
+  tn=p;
+
+  if(tn==NULL){   //付け足す前のポインタがNULLなら作ったものを代入
+    return q;
+  }
+  else {
+    tn->NEXT=q;
+
+    return q;
+  }
+}
+
+void FreeList(unsigned int m,struct LIST *neighbor[]){
+ struct LIST *p,*tn;
+ int i;
+
+
+ for(i=0;i<m;i++){
+   tn=neighbor[i];
+    while(tn!=NULL){   //各配列の要素を解放
+      p=tn->NEXT;
+      free(tn);
+      tn=p;
+    }
+    neighbor[i]=NULL;
+  }
+}
+void FreeListAll(unsigned int m,struct LIST *neighbor[]){
+
+    FreeList(m,neighbor);
+   free(neighbor);
+}
+void ChangeList(unsigned int m,struct LIST *neighbor_src[],unsigned int n,struct LIST *neighbor_des[]){
+  int i,j;
+  struct LIST *p,**tn;
+
+  tn=(struct LIST**)malloc (sizeof(struct LIST)*n);
+  if(tn==NULL){ printf("memory cannot alloc!!\n");  exit(1);}
+
+  FreeList(n,neighbor_des);
+
+
+  for(i=0;i<m;i++){
+    p=neighbor_src[i];
+    while(p!=NULL){
+      if(neighbor_des[p->INDEX]==NULL){
+          neighbor_des[p->INDEX]=AddListEnd(NULL,i,p->VALUE);
+          tn[p->INDEX]=neighbor_des[p->INDEX];
+        }
+      else {
+          tn[p->INDEX]=AddListEnd(tn[p->INDEX],i,p->VALUE);
+      }
+      p=p->NEXT;
+    }
+  }
+}
+int **MallocMatrix(unsigned int m,unsigned int n,int **mat){
+  int i,j;
+  int b_mat;
+  mat = (int**)malloc(m*sizeof(int *) );
+  mat[0]=(int*)malloc(m*n*sizeof(int));
+  for (i=1;i<m;i++) {
+     mat[i] = mat[0]+i*n;
+  }
+  for(i=0;i<m;i++){
+    for(j=0;j<n;j++){
+      mat[i][j]=0;
+    //    printf("%p ",&mat[i][j]);
+    }
+//    printf("\n");
+  }
+  return mat;
+}
+void FreeMatrix(unsigned int m,int **mat){
+int i;
+
+  free(mat[0]);
+  free(mat);
+}
+
+void PrintMatrixV(unsigned int m,unsigned int n,struct LIST *v_neighbor[]){
+    int i,j;
+    int **ldm;
+  struct LIST *p;
+
+    ldm=MallocMatrix(m,n,ldm);
+
+    for(i=0;i<n;i++){
+      p=v_neighbor[i];
+      while(p!=NULL){
+            ldm[p->INDEX][i]=1;
+            p=p->NEXT;
+          }
+    }
+    for(i=0;i<m;i++){
+      for(j=0;j<n;j++){
+        printf("%d",ldm[i][j]);
+        }
+        printf("\n");
+      }
+      FreeMatrix(m,ldm);
+}
+
+void PrintMatrixC(unsigned int m,unsigned int n,struct LIST *c_neighbor[]){
+    int i,j;
+    int **ldm;
+  struct LIST *p;
+
+      ldm=MallocMatrix(m,n,ldm);
+
+      for(i=0;i<m;i++){
+        p=c_neighbor[i];
+        while(p!=NULL){
+            ldm[i][p->INDEX]=1;
+            p=p->NEXT;
+        }
+      }
+    for(i=0;i<m;i++){
+      for(j=0;j<n;j++){
+        printf("%d",ldm[i][j]);
+        }
+        printf("\n");
+      }
+
+      FreeMatrix(m,ldm);
+}
