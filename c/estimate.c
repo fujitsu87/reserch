@@ -6,13 +6,13 @@
 #include "../include/blas.c"
 
 //基地局のアンテナの数
-#define N 30
+#define N 10
 //ユーザ数
-#define K 50
+#define K 10
 //離散時間ステップ数
-#define T 150
+#define T 60
 //pilot信号時間長さ
-#define Tp 50
+#define Tp 20
 //ユーザ分割数
 #define DK 2
 //pilot信号の値
@@ -24,6 +24,8 @@ double N0;
 const double rho_k = 1.0;
 
 double a_k;
+
+int Repeat_flg = 0;
 
 gsl_matrix_complex* x;
 gsl_matrix_complex* h;
@@ -251,7 +253,7 @@ void culc_z()
 	{
 		for (t = 0; t < T; ++t)
 		{
-			double noise = GaussianNoise(sqrt(N0));
+			double noise = N0;
 			gsl_matrix_set(tmp2,n,t,noise);
 		}
 	}
@@ -267,7 +269,6 @@ void culc_z()
 			gsl_matrix_complex_set(z,n,t,tmp3);
 		}
 	}
-
 	tmp1 = GSLMatrixFree(tmp1);
 	tmp2 = GSLRealMatrixFree(tmp2);
 }
@@ -293,16 +294,25 @@ double diff_fk(double u,double v)
 gsl_complex A(gsl_complex arg,int k,int t)
 {
 	gsl_complex ans;
-	double v = gsl_matrix_get(xi_b,k,t);
-	ans.dat[0] = GSL_REAL(arg) 
-				* diff_fk(GSL_REAL(gsl_matrix_complex_get(x_h,k,t))
-							,v
+
+	if(Repeat_flg == 0)
+	{
+		ans.dat[0] = 0.0;
+		ans.dat[1] = 0.0;
+		return ans;
+	}
+	else {
+		double v = gsl_matrix_get(xi_b,k,t);
+		ans.dat[0] = GSL_REAL(arg) 
+					* diff_fk(GSL_REAL(gsl_matrix_complex_get(x_h,k,t))
+						,v
 					);
-	ans.dat[1] = GSL_IMAG(arg) 
-				* diff_fk(GSL_IMAG(gsl_matrix_complex_get(x_h,k,t))
-							,v
+		ans.dat[1] = GSL_IMAG(arg) 
+					* diff_fk(GSL_IMAG(gsl_matrix_complex_get(x_h,k,t))
+						,v
 					);
-	return ans;
+		return ans;
+	}
 }
 
 //----------------I_bの計算--------------------------------
@@ -418,7 +428,7 @@ void culc_h_h()
 				//h_h * x_h_conju　第1項の計算
 				
 				tmp1 = gsl_complex_mul(
-							gsl_matrix_complex_get(x_h_conju,k,n)
+							gsl_matrix_complex_get(x_h_conju,t,k)
 							,gsl_matrix_complex_get(z,n,t)
 						);
 
@@ -490,7 +500,7 @@ void culc_eta()
 			for (t = 0; t < T; ++t)
 			{
 				tmp2 += gsl_matrix_get(x_h_abs2,k,t);
-				tmp2 = tmp2/(GaussianNoise(sqrt(N0)) + gsl_matrix_get(zeta,n,t));
+				tmp2 = tmp2/(N0+ gsl_matrix_get(zeta,n,t));
 			}
 			tmp1 += tmp2/(double)N;
 
@@ -517,11 +527,12 @@ int main()
 	// PrintMatrix(stdout,N,T,x_h);
 	//x^2の計算
 	abs2_matrix(x_h,x_h_abs2,K,T);
-	for (i = 0; i < 100; ++i)
+	for (i = 0; i < 10000; ++i)
 	{
 		channel_estimation();
 		// PrintMatrix(stdout,N,K,h_h);
 	}
+
 	PrintMatrix(stdout,N,K,h_h);
 
 	PrintMatrix(stdout,N,K,h);
