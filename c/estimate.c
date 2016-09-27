@@ -1,175 +1,12 @@
 #include <stdio.h>
 #include <math.h>
-#include <stdio.h>
+#include <stdlib.h>
 #include "../include/matrix.c"
 #include "../include/random_number.c"
 #include "../include/blas.c"
+#include "init_functions.c"
+#include "inspection.c"
 
-//基地局のアンテナの数
-#define N 10
-//ユーザ数
-#define K 10
-//離散時間ステップ数
-#define T 60
-//pilot信号時間長さ
-#define Tp 20
-//ユーザ分割数
-#define DK 2
-//pilot信号の値
-const double Pk = 1.0;
-
-//ノイズ　10dB
-double N0;
-//信号が送られる確率
-const double rho_k = 1.0;
-
-double a_k;
-
-int Repeat_flg = 0;
-
-gsl_matrix_complex* x;
-gsl_matrix_complex* h;
-gsl_matrix_complex* w;
-gsl_matrix_complex* y;
-
-gsl_matrix_complex* z;
-
-gsl_matrix_complex* x_h;
-gsl_matrix* x_h_abs2;
-gsl_matrix* xi;
-gsl_matrix_complex* x_b;
-gsl_matrix* xi_b;
-gsl_matrix_complex* h_h;
-gsl_matrix* h_h_abs2;
-gsl_matrix* eta;
-gsl_matrix_complex* I_b;
-gsl_matrix* zeta;
-
-
-//--------------------------------初期化関数--------------------------------------
-
-void init_h()
-{
-	int n,k;
-	double sigma =0.5;
-	for (n = 0; n < N; ++n)
-	{
-		for (k = 0; k < K; ++k)
-		{
-			gsl_complex z = GSLComplexGaussianNoise(sigma);
-			// GSL_SET_COMPLEX(&z,1,1);
-			gsl_matrix_complex_set(h,n,k,z);
-
-		}
-	}
-}
-
-void init_x()
-{
-	int k,t;
-	for (k = 0; k < K; ++k)
-	{
-		for (t = 0; t < T; ++t)
-		{
-
-			double tmp[2] = {-1.0,1.0};
-			gsl_complex z;
-			GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
-			gsl_matrix_complex_set(x ,k,t,z);
-
-			//左下のpilot信号
-			if(k >= K/DK && t < Tp)
-			{
-				gsl_matrix_complex_set(x_h,k,t,z);
-			}
-						//左下のpilot信号
-			else if(k < K/DK && t >= T-Tp)
-			{
-				gsl_matrix_complex_set(x_h,k,t,z);
-			}
-		
-		}
-	}
-}
-
-void init_w()
-{
-	int n,t;
-	for (n = 0; n < N; ++n)
-	{
-		for (t = 0; t < T; ++t)
-		{
-			gsl_complex z = GSLComplexGaussianNoise(sqrt(N0));
-			// GSL_SET_COMPLEX(&z,1,1);
-			gsl_matrix_complex_set(w,n,t,z);
-		}
-	}
-}
-
-void init()
-{
-	int i,j;
-	//ノイズ　10dB
-	N0 = Pk/10.0;
-	x = gsl_matrix_complex_calloc(K,T);
-	h = gsl_matrix_complex_calloc(N,K);
-	w = gsl_matrix_complex_calloc(N,T);
-	y = gsl_matrix_complex_calloc(N,T);
-
-	z = gsl_matrix_complex_calloc(N,T);
-
-	x_h = gsl_matrix_complex_calloc(K,T);
-	x_h_abs2 = gsl_matrix_calloc(K,T);
-	xi = gsl_matrix_calloc(K,T);
-	x_b = gsl_matrix_complex_calloc(K,T);
-	xi_b = gsl_matrix_calloc(K,T);
-	h_h = gsl_matrix_complex_calloc(N,K);
-	h_h_abs2 = gsl_matrix_calloc(N,K);
-	eta = gsl_matrix_calloc(N,K);
-	I_b = gsl_matrix_complex_calloc(N,T);
-	zeta = gsl_matrix_calloc(N,T);
-
-	a_k = sqrt(Pk/(2*rho_k));
-	
-	//乱数初期化
-	RandomNumberInitialization(0);
-	
-	//通信路h初期化
-	init_h();
-	
-	//入力値xの初期化 pilot信号をx_hにも代入
-	init_x();
-	
-	//雑音wの初期化
-	init_w();
-
-	//行列計算　y = hx/sqrt(nN) + w
-	AB(h,x,y);
-	gsl_complex tmp1;
-	GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
-	gsl_matrix_complex_scale(y,tmp1);
-	gsl_matrix_complex_add(y,w);
-
-	// init xi
-	for (i = 0; i < K; ++i)
-	{
-		for (j = 0; j < T; ++j)
-		{
-			gsl_matrix_set(xi ,i,j,1);
-			gsl_matrix_set(xi_b ,i,j,1);
-		}
-	}
-	//init eta
-	for (i = 0; i < N; ++i)
-	{
-		for (j = 0; j < K; ++j)
-		{
-			gsl_matrix_set(eta ,i,j,1);
-		}
-	}
-
-
-}
 
 //----------------絶対値の2乗の行列を計算-------------------------------
 void abs2_matrix(gsl_matrix_complex *x, gsl_matrix *y,int s1,int s2)
@@ -204,6 +41,8 @@ void finish()
 	eta = GSLRealMatrixFree(eta);
 	I_b = GSLMatrixFree(I_b);
 	zeta = GSLRealMatrixFree(zeta);
+
+	pilot =  GSLRealMatrixFree(pilot);
 }
 
 //-----------zetaの計算-----------------------------------
@@ -272,6 +111,23 @@ void culc_z()
 	tmp1 = GSLMatrixFree(tmp1);
 	tmp2 = GSLRealMatrixFree(tmp2);
 }
+//---------------fk関数---------------------------------------------
+double fk(double u,double v)
+{
+	double ans;
+	double e1,e2,e3,t1,t2;
+	e1 = exp(2*a_k*u/v);
+	e2 = exp(-2*a_k*u/v);
+	e3 = exp(a_k*a_k/v);
+
+	t1 = a_k * (e1 - e2);
+	t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
+
+	ans = t1/t2;
+
+	return ans;
+}
+
 //------------------A関数-------------------------------------------
 double diff_fk(double u,double v)
 {
@@ -499,13 +355,115 @@ void culc_eta()
 			tmp2 = 0;
 			for (t = 0; t < T; ++t)
 			{
-				tmp2 += gsl_matrix_get(x_h_abs2,k,t);
-				tmp2 = tmp2/(N0+ gsl_matrix_get(zeta,n,t));
+				tmp2 += gsl_matrix_get(x_h_abs2,k,t)/(N0+ gsl_matrix_get(zeta,n,t));
+				
 			}
-			tmp1 += tmp2/(double)N;
+			tmp1 = 1 + tmp2/(double)N;
 
 			gsl_matrix_set(eta,n,k,1/tmp1);
 		}
+	}
+}
+//------------------culc_xi_b------------------------------------
+void culc_xi_b()
+{
+	int k,t,n;
+	double tmp1,tmp2;
+
+	for (k = 0; k < K; ++k)
+	{
+		for (t = 0; t < T; ++t)
+		{
+			double tmp1 = 0;
+			double tmp2 = 0;
+			for (n = 0; n < N; ++n)
+			{
+				tmp2 += gsl_complex_abs2(gsl_matrix_complex_get(h_h,n,k))/(N0 + gsl_matrix_get(zeta,n,t));
+			}
+			tmp1 = tmp2/(double)N;
+			gsl_matrix_set(xi_b,k,t,1/tmp1);
+		}
+	}
+}
+//------------------culc_x_b------------------------------------
+void culc_x_b()
+{
+	int k,t,n;
+	double tmp1,tmp2;
+
+	for (k = 0; k < K; ++k)
+	{
+		for (t = 0; t < T; ++t)
+		{
+			//sec1 ... 第一項　sec2 ... 第2項
+			gsl_complex sec1,sec2;
+
+			gsl_complex tmp1;
+			tmp1.dat[0] = 0.0;
+			tmp1.dat[1] = 0.0;
+
+			double tmp2 = 0;
+			gsl_complex tmp3,tmp4;
+
+			double tmp5,tmp6;
+
+			double coef1 = gsl_matrix_get(xi_b,k,t)/sqrt((double)N);
+			double coef2 = gsl_matrix_get(xi_b,k,t)/(double)N;
+
+			for (n = 0; n < N; ++n)
+			{
+				tmp3 = gsl_complex_conjugate(gsl_matrix_complex_get(h_h,n,k));
+				tmp4 = gsl_matrix_complex_get(z,n,t);
+				tmp1 = gsl_complex_add(gsl_complex_mul(tmp3,tmp4),tmp1);
+
+				tmp5 = gsl_matrix_get(eta,n,k);
+				tmp6 = gsl_complex_abs2(gsl_matrix_complex_get(z,n,t));
+				tmp2 += tmp5*tmp6;
+			}
+			sec1 = gsl_complex_mul_real(tmp1,coef1);
+			
+			tmp2 = 1 - coef2*tmp2;
+			sec2 = gsl_complex_mul_real(gsl_matrix_complex_get(x_h,k,t),tmp2);
+
+			gsl_matrix_complex_set(x_b,k,t,gsl_complex_add(sec1,sec2));
+		}
+	}
+}
+//------------------culc_xi------------------------------------
+void culc_xi()
+{
+	int k,t;
+	for (k = 0; k < K; ++k)
+	{
+		for (t = 0; t < T; ++t)
+		{
+			double tmp;
+			tmp = Pk - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
+			gsl_matrix_set(xi,k,t,tmp);
+		}
+	}
+}
+//------------------culc_x_h------------------------------------
+void culc_x_h()
+{
+	int k,t;
+	gsl_complex tmp;
+	for (k = 0; k < K; ++k)
+	{
+		for (t = 0; t < T; ++t)
+		{
+			if(gsl_matrix_get(pilot,k,t) == 0)
+			{
+				tmp.dat[0] = fk(GSL_REAL(gsl_matrix_complex_get(x_b,k,t))
+								,gsl_matrix_get(xi_b,k,t)
+								);
+				tmp.dat[1] = fk(GSL_IMAG(gsl_matrix_complex_get(x_b,k,t))
+								,gsl_matrix_get(xi_b,k,t)
+								);
+				gsl_matrix_complex_set(x_h,k,t,tmp);
+			}
+		}
+
 	}
 }
 //------------------通信路推定器----------------------------------
@@ -515,33 +473,80 @@ void channel_estimation()
 	culc_zata();
 	culc_I();
 	
-	culc_h_h();
 	culc_eta();
+	culc_h_h();
 	
+}
+
+//------------------データ推定器----------------------------------
+void data_estimation()
+{
+	culc_z();
+	culc_zata();
+	culc_I();
+	
+	culc_xi_b();
+	culc_x_b();
+	culc_xi();
+	culc_x_h();
+	// PrintRealMatrix(stdout,K,T,xi_b);
+	// PrintMatrix(stdout,K,T,x_b);
 }
 //---------------------------------------------------------------
 int main()
 {
-	int i;
+	FILE *fp_mse_h;
+	FILE *fp_bit_err;
+	if ((fp_mse_h = fopen("mse_h.dat", "w")) == NULL) {
+		return 1;
+	}
+	if ((fp_bit_err = fopen("bit_err.dat", "w")) == NULL) {
+		return 1;
+	}
+	int i,j;
+	int count_h = 1;
+	int count_x = 1;
 	init();
 	// PrintMatrix(stdout,N,T,x_h);
 	//x^2の計算
 	abs2_matrix(x_h,x_h_abs2,K,T);
-	for (i = 0; i < 10000; ++i)
-	{
-		channel_estimation();
-		// PrintMatrix(stdout,N,K,h_h);
+
+
+	for (i = 0; i < 4; ++i)
+		{
+			/* code */
+		//通信路推定
+		for (j = 0; j < 100; ++j)
+		{
+			channel_estimation();
+			fprintf(fp_mse_h, "%d %lf\n",count_h,culc_complex_mse(N,K,h,h_h));
+			++count_h;
+			// PrintMatrix(stdout,N,K,h_h);
+		}
+		Repeat_flg = 1;
+		//データ推定
+		for (j = 0; j < 100; ++j)
+		{
+			data_estimation();
+			fprintf(fp_bit_err, "%d %lf\n",count_x,culc_bit_error_rate());
+			++count_x;
+			// PrintMatrix(stdout,N,K,h_h);
+		}
 	}
 
-	PrintMatrix(stdout,N,K,h_h);
 
+
+	PrintMatrix(stdout,N,K,h_h);
 	PrintMatrix(stdout,N,K,h);
 
-	// PrintMatrix(stdout,K,T,x_h);
 
-	// PrintMatrix(stdout,K,T,x);
+	PrintMatrix(stdout,K,T,x_h);
+	PrintMatrix(stdout,K,T,x);
 
-	finish();
+	printf("%f\n",culc_bit_error_rate());
 	
+	finish();
+	fclose(fp_mse_h);
+	fclose(fp_bit_err);
 	return 0;
 }
