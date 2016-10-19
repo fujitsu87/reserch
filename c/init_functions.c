@@ -1,11 +1,11 @@
 //基地局のアンテナの数
-#define N 20
+#define N 2000
 //ユーザ数
-#define K 20
+#define K 8
 //離散時間ステップ数
-#define T 40
+#define T 1000
 //pilot信号時間長さ
-#define Tp 15
+#define Tp 400
 //ユーザ分割数
 #define DK 2
 //pilot信号の値
@@ -47,7 +47,7 @@ gsl_matrix* pilot;
 void init_h()
 {
 	int n,k;
-	double sigma =0.5;
+	double sigma = 0.5;
 	for (n = 0; n < N; ++n)
 	{
 		for (k = 0; k < K; ++k)
@@ -67,8 +67,8 @@ void init_pilot()
 	{
 		for (t = 0; t < T; ++t)
 		{
-
-			//左下のpilot信号
+			
+			// //左下のpilot信号
 			if(k >= K/DK && t < Tp)
 			{
 				gsl_matrix_set(pilot,k,t,1);
@@ -81,7 +81,22 @@ void init_pilot()
 			else{
 				gsl_matrix_set(pilot,k,t,0);
 			}
-		
+			
+			/*
+			// 左下のpilot信号
+			if(t < Tp)
+			{
+				gsl_matrix_set(pilot,k,t,1);
+			}
+			//右上のpilot信号
+			else if(t >= T-Tp)
+			{
+				gsl_matrix_set(pilot,k,t,1);
+			}
+			else{
+				gsl_matrix_set(pilot,k,t,0);
+			}
+			*/
 		}
 	}
 }
@@ -124,10 +139,10 @@ void init_xi()
 	{
 		for (j = 0; j < T; ++j)
 		{
-			double tmp[2] = {1,0};
+			double tmp[2] = {1.0,0.0};
 			int index = (int)gsl_matrix_get(pilot,i,j);
 			gsl_matrix_set(xi ,i,j,tmp[index]);
-			gsl_matrix_set(xi_b ,i,j,tmp[index]);
+			gsl_matrix_set(xi_b ,i,j,1);
 		}
 	}
 
@@ -148,6 +163,9 @@ void init_eta()
 void init_x_h()
 {
 	int k,t;
+	gsl_complex def;
+	def.dat[0] = 0;
+	def.dat[1] = 0;
 	for (k = 0; k < K; ++k)
 	{
 		for (t = 0; t < T; ++t)
@@ -155,6 +173,12 @@ void init_x_h()
 			if(gsl_matrix_get(pilot,k,t) == 1)
 			{
 				gsl_matrix_complex_set(x_h,k,t,gsl_matrix_complex_get(x,k,t));
+				gsl_matrix_complex_set(x_b,k,t,gsl_matrix_complex_get(x,k,t));
+			}
+			else 
+			{
+				gsl_matrix_complex_set(x_h,k,t,def);
+				gsl_matrix_complex_set(x_b,k,t,def);
 			}
 		}
 	}
@@ -164,7 +188,7 @@ void init()
 {
 	int i,j;
 	//ノイズ　10dB
-	N0 = Pk/10.0;
+	N0 = Pk/30.0;
 	x = gsl_matrix_complex_calloc(K,T);
 	h = gsl_matrix_complex_calloc(N,K);
 	w = gsl_matrix_complex_calloc(N,T);

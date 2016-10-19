@@ -31,12 +31,15 @@ double culc_bit_error_rate()
 			if(gsl_matrix_get(pilot,k,t) == 0)
 			{
 				//ビットを間違えた場合
-				if((gsl_matrix_complex_get(x_h,k,t).dat[0]*gsl_matrix_complex_get(x,k,t).dat[0] < 0) 
-					|| (gsl_matrix_complex_get(x_h,k,t).dat[1]*gsl_matrix_complex_get(x,k,t).dat[1] < 0))
+				if(gsl_matrix_complex_get(x_h,k,t).dat[0]*gsl_matrix_complex_get(x,k,t).dat[0] < 0 )
 				{
 					++count;
 				}
-				++num;
+				if(gsl_matrix_complex_get(x_h,k,t).dat[1]*gsl_matrix_complex_get(x,k,t).dat[1] < 0 )
+				{
+					++count;
+				}
+				num = num + 2;
 			}
 		}
 	}
