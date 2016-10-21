@@ -368,7 +368,7 @@ void culc_eta()
             gsl_matrix_set(eta,n,k,1/tmp1);
         }
     }
-    PrintRealMatrix(stdout,N,K,eta);
+    // PrintRealMatrix(stdout,N,K,eta);
 }
 //------------------culc_xi_b------------------------------------
 void culc_xi_b()
@@ -485,20 +485,20 @@ void culc_x_h()
 void channel_estimation()
 {
     culc_zata();
-    culc_z();
     culc_I();
+    culc_z();
     
     culc_eta();
     culc_h_h();
-    PrintMatrix(stdout,N,K,h_h);
+    
 }
 
 //------------------データ推定器----------------------------------
 void data_estimation()
 {
     culc_zata();
-    culc_z();
     culc_I();
+    culc_z();
     
     culc_xi_b();
     culc_x_b();
@@ -515,32 +515,44 @@ int main()
     FILE *fp_x;
     FILE *fp_sn_bit_err;
 
-    if ((fp_mse_h = fopen("mse_h15.dat", "w")) == NULL) {
-        return 1;
-    }
-    if ((fp_bit_err = fopen("bit_err15.dat", "w")) == NULL) {
-        return 1;
-    }
-    if ((fp_x = fopen("x15.dat", "w")) == NULL) {
-        return 1;
-    }
-    if ((fp_sn_bit_err = fopen("sn_bit_err15.dat", "a")) == NULL) {
-        return 1;
-    }
+    char mse_h[100];
+    char bit_err[100];
+    char etc[100];
+    char sn_bit_err[100];
+    
     int i,j,l;
     int count_h = 1;
     int count_x = 1;
     init();
+
+    sprintf(mse_h,"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(bit_err,"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(etc,"etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(sn_bit_err,"sn_bit_err_N%d_K%d_T%d_Tp%d_halfpilot.dat",N,K,T,Tp);
+    
+    if ((fp_mse_h = fopen(mse_h, "w")) == NULL) {
+        printf("can not open%s\n",mse_h);
+        return 1;
+    }
+    if ((fp_bit_err = fopen(bit_err, "w")) == NULL) {
+        printf("can not open %s\n",bit_err);
+        return 1;
+    }
+    if ((fp_x = fopen(etc, "w")) == NULL) {
+        printf("can not open %s\n",etc);
+        return 1;
+    }
+    if ((fp_sn_bit_err = fopen(sn_bit_err, "a")) == NULL) {
+        printf("can not open %s\n",sn_bit_err);
+        return 1;
+    }
+
     // PrintMatrix(stdout,N,T,x_h);
     //x^2の計算
     abs2_matrix(x_h,x_h_abs2,K,T);
     abs2_matrix(h_h,h_h_abs2,N,K);
 
-    culc_zata();
-    culc_z();
-    culc_I();
-    culc_z();
-    PrintRealMatrix(fp_x,K,T,xi);
+   
 
         
     for (i = 0; i < 3; ++i)
@@ -552,7 +564,8 @@ int main()
             channel_estimation();
             fprintf(fp_mse_h, "%d %e\n",count_h,culc_complex_mse(N,K,h,h_h));
             ++count_h;
-            // PrintMatrix(stdout,N,K,h_h);
+            // PrintMatrix(stdout,N,K,h_h)
+            // PrintMatrix(stdout,N,T,I_b);;
             abs2_matrix(h_h,h_h_abs2,N,K);
 
         }
@@ -569,15 +582,15 @@ int main()
             // PrintMatrix(stdout,N,K,h_h);
         }
         PrintMatrix(stdout,K,T,x_h);
-        // PrintMatrix(fp_x,K,T,x_h);
-        // PrintMatrix(fp_x,K,T,x);
+        PrintMatrix(fp_x,K,T,x_h);
+        PrintMatrix(fp_x,K,T,x);
     }
 
     PrintRealMatrix(fp_x,K,T,pilot);
     // PrintRealMatrix(fp_x,K,T,xi);
     // PrintMatrix(stdout,N,K,h_h);
     // PrintMatrix(stdout,N,K,h);
-    printf("%f\n",culc_bit_error_rate());
+    printf("%g\n",culc_bit_error_rate());
     fprintf(fp_sn_bit_err,"%f %f\n",10*log10(Pk/N0),culc_bit_error_rate());
 
     finish();

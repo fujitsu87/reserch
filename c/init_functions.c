@@ -1,11 +1,11 @@
 //基地局のアンテナの数
-#define N 2000
+#define N 2048
 //ユーザ数
-#define K 8
+#define K 16
 //離散時間ステップ数
-#define T 1000
+#define T 5000
 //pilot信号時間長さ
-#define Tp 400
+#define Tp 2000
 //ユーザ分割数
 #define DK 2
 //pilot信号の値
@@ -83,12 +83,12 @@ void init_pilot()
 			}
 			
 			/*
-			// 左下のpilot信号
+			// 左のpilot信号
 			if(t < Tp)
 			{
 				gsl_matrix_set(pilot,k,t,1);
 			}
-			//右上のpilot信号
+			//右のpilot信号
 			else if(t >= T-Tp)
 			{
 				gsl_matrix_set(pilot,k,t,1);
@@ -188,7 +188,7 @@ void init()
 {
 	int i,j;
 	//ノイズ　10dB
-	N0 = Pk/30.0;
+	N0 = Pk/10.0;
 	x = gsl_matrix_complex_calloc(K,T);
 	h = gsl_matrix_complex_calloc(N,K);
 	w = gsl_matrix_complex_calloc(N,T);
