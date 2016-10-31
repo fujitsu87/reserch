@@ -1,5 +1,6 @@
 #include <stdio.h>
 #include <math.h>
+#include <time.h>
 #include <stdlib.h>
 #include "../include/matrix.c"
 #include "../include/random_number.c"
@@ -429,10 +430,10 @@ void culc_x_b()
                     tmp2 += tmp5*tmp6;
 
                 }
-                // printf("%f %f\n",tmp1.dat[0],tmp1.dat[1]);
                 sec1 = gsl_complex_mul_real(tmp1,coef1);
-
+                // printf("%f\n",coef2*tmp2);
                 tmp2 = 1 - coef2*tmp2;
+                
                 sec2 = gsl_complex_mul_real(gsl_matrix_complex_get(x_h,k,t),tmp2);
 
                 gsl_matrix_complex_set(x_b,k,t,gsl_complex_add(sec1,sec2));
@@ -488,8 +489,13 @@ void channel_estimation()
     culc_I();
     culc_z();
     
+    /*
     culc_eta();
     culc_h_h();
+    */
+    
+    gsl_matrix_set_zero(eta);
+    gsl_matrix_complex_memcpy(h_h,h);
     
 }
 
@@ -525,10 +531,10 @@ int main()
     int count_x = 1;
     init();
 
-    sprintf(mse_h,"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(bit_err,"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(etc,"etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(sn_bit_err,"sn_bit_err_N%d_K%d_T%d_Tp%d_halfpilot.dat",N,K,T,Tp);
+    sprintf(mse_h,"./data/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(bit_err,"./data/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(etc,"./data/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(sn_bit_err,"./data/sn_bit_err_N%d_K%d_T%d_Tp%d_allpilot.dat",N,K,T,Tp);
     
     if ((fp_mse_h = fopen(mse_h, "w")) == NULL) {
         printf("can not open%s\n",mse_h);
@@ -554,9 +560,12 @@ int main()
 
    
 
-        
+    clock_t start,end;
+    start = clock();
+    
     for (i = 0; i < 3; ++i)
     {
+        
         //通信路推定
         for (j = 0; j < 100; ++j)
         {
@@ -572,9 +581,13 @@ int main()
         PrintMatrix(stdout,N,K,h_h);
         // PrintMatrix(stdout,N,K,h);
         Repeat_flg = 1;
+
+
         //データ推定
         for (j = 0; j < 100; ++j)
         {
+
+
             data_estimation();
             fprintf(fp_bit_err, "%d %lf\n",count_x,culc_bit_error_rate());
             ++count_x;
@@ -585,12 +598,12 @@ int main()
         PrintMatrix(fp_x,K,T,x_h);
         PrintMatrix(fp_x,K,T,x);
     }
-
+    end = clock();
     PrintRealMatrix(fp_x,K,T,pilot);
     // PrintRealMatrix(fp_x,K,T,xi);
     // PrintMatrix(stdout,N,K,h_h);
     // PrintMatrix(stdout,N,K,h);
-    printf("%g\n",culc_bit_error_rate());
+    printf("BER = %g Computation time = %f[sec]\n",culc_bit_error_rate(),(double)(end-start)/ CLOCKS_PER_SEC);
     fprintf(fp_sn_bit_err,"%f %f\n",10*log10(Pk/N0),culc_bit_error_rate());
 
     finish();

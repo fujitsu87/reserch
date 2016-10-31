@@ -2,4 +2,4 @@ set logscale y
 set yrange [0.001:40]
 set xlabel "n"
 set ylabel "mse"
-plot "mse_h_N1024_K4_T1000_Tp450_SN10.00dB.dat" w l
+plot "mse_h_N128_K64_T2000_Tp900_SN10.dat" w l

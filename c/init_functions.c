@@ -1,11 +1,11 @@
 //基地局のアンテナの数
-#define N 2048
+#define N 128
 //ユーザ数
-#define K 16
+#define K 64
 //離散時間ステップ数
-#define T 5000
+#define T 1000
 //pilot信号時間長さ
-#define Tp 2000
+#define Tp 400
 //ユーザ分割数
 #define DK 2
 //pilot信号の値
@@ -68,6 +68,7 @@ void init_pilot()
 		for (t = 0; t < T; ++t)
 		{
 			
+			
 			// //左下のpilot信号
 			if(k >= K/DK && t < Tp)
 			{
@@ -82,7 +83,8 @@ void init_pilot()
 				gsl_matrix_set(pilot,k,t,0);
 			}
 			
-			/*
+			
+			
 			// 左のpilot信号
 			if(t < Tp)
 			{
@@ -96,7 +98,7 @@ void init_pilot()
 			else{
 				gsl_matrix_set(pilot,k,t,0);
 			}
-			*/
+			
 		}
 	}
 }
@@ -188,7 +190,7 @@ void init()
 {
 	int i,j;
 	//ノイズ　10dB
-	N0 = Pk/10.0;
+	N0 = Pk/5.0;
 	x = gsl_matrix_complex_calloc(K,T);
 	h = gsl_matrix_complex_calloc(N,K);
 	w = gsl_matrix_complex_calloc(N,T);
@@ -212,7 +214,7 @@ void init()
 	a_k = sqrt(Pk/(2*rho_k));
 	
 	//乱数初期化
-	RandomNumberInitialization(0);
+	RandomNumberInitialization(2);
 	
 	//通信路h初期化
 	init_h();
