@@ -489,14 +489,14 @@ void channel_estimation()
     culc_I();
     culc_z();
     
-    /*
+    
     culc_eta();
     culc_h_h();
-    */
     
+    /*
     gsl_matrix_set_zero(eta);
     gsl_matrix_complex_memcpy(h_h,h);
-    
+    */
 }
 
 //------------------データ推定器----------------------------------
@@ -514,8 +514,10 @@ void data_estimation()
     // PrintMatrix(stdout,K,T,x_b);
 }
 //---------------------------------------------------------------
-int main()
+int main(int argc, char *argv[])
 {
+
+
     FILE *fp_mse_h;
     FILE *fp_bit_err;
     FILE *fp_x;
@@ -529,12 +531,13 @@ int main()
     int i,j,l;
     int count_h = 1;
     int count_x = 1;
-    init();
+   
+    init(atof(argv[1]));
 
-    sprintf(mse_h,"./data/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(bit_err,"./data/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(etc,"./data/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(sn_bit_err,"./data/sn_bit_err_N%d_K%d_T%d_Tp%d_allpilot.dat",N,K,T,Tp);
+    sprintf(mse_h,"./data/20161115/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(bit_err,"./data/20161115/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(etc,"./data/20161115/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(sn_bit_err,"./data/20161115/sn_bit_err_N%d_K%d_T%d_Tp%d.dat",N,K,T,Tp);
     
     if ((fp_mse_h = fopen(mse_h, "w")) == NULL) {
         printf("can not open%s\n",mse_h);

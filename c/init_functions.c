@@ -1,11 +1,11 @@
 //基地局のアンテナの数
 #define N 128
 //ユーザ数
-#define K 64
+#define K 32
 //離散時間ステップ数
-#define T 1000
+#define T 200
 //pilot信号時間長さ
-#define Tp 400
+#define Tp 80
 //ユーザ分割数
 #define DK 2
 //pilot信号の値
@@ -47,7 +47,7 @@ gsl_matrix* pilot;
 void init_h()
 {
 	int n,k;
-	double sigma = 0.5;
+	double sigma = 1;
 	for (n = 0; n < N; ++n)
 	{
 		for (k = 0; k < K; ++k)
@@ -84,7 +84,7 @@ void init_pilot()
 			}
 			
 			
-			
+			/*
 			// 左のpilot信号
 			if(t < Tp)
 			{
@@ -98,7 +98,7 @@ void init_pilot()
 			else{
 				gsl_matrix_set(pilot,k,t,0);
 			}
-			
+			*/
 		}
 	}
 }
@@ -113,11 +113,20 @@ void init_x()
 
 			double tmp[2] = {-1.0,1.0};
 			gsl_complex z;
-			GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
+
+			// //左下のpilot信号
+			if(k >= K/DK && t < Tp)
+			{
+				z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
+			}
+			else 
+			{
+				GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
+			}
 			gsl_matrix_complex_set(x ,k,t,z);
-		
 		}
 	}
+	// PrintMatrix(stdout,K,T,x);
 }
 
 void init_w()
@@ -186,11 +195,12 @@ void init_x_h()
 	}
 }
 
-void init()
+void init(double sn)
 {
 	int i,j;
 	//ノイズ　10dB
-	N0 = Pk/5.0;
+	
+	N0 = Pk/(double)sn;
 	x = gsl_matrix_complex_calloc(K,T);
 	h = gsl_matrix_complex_calloc(N,K);
 	w = gsl_matrix_complex_calloc(N,T);
@@ -214,19 +224,21 @@ void init()
 	a_k = sqrt(Pk/(2*rho_k));
 	
 	//乱数初期化
-	RandomNumberInitialization(2);
+	RandomNumberInitialization(0);
 	
 	//通信路h初期化
 	init_h();
 	
+	//pilot信号の初期化　pilotの場合...0 他...1
+	init_pilot();
+
 	//入力値xの初期化 pilot信号をx_hにも代入
 	init_x();
 	
 	//雑音wの初期化
 	init_w();
 
-	//pilot信号の初期化　pilotの場合...0 他...1
-	init_pilot();
+
 
 	//行列計算　y = hx/sqrt(nN) + w
 	AB(h,x,y);
