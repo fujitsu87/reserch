@@ -507,6 +507,7 @@ void data_estimation()
     culc_z();
     
     culc_xi_b();
+    PrintMatrix(stdout,K,T,xi_b);
     culc_x_b();
     culc_xi();
     culc_x_h();

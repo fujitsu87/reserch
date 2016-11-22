@@ -9,6 +9,7 @@
 #include "inspection.c"
 
 
+
 //----------------絶対値の2乗の行列を計算-------------------------------
 void abs2_matrix(gsl_matrix_complex *x, gsl_matrix *y,int s1,int s2)
 {
@@ -83,9 +84,10 @@ void culc_z()
     gsl_matrix_complex* tmp1;
     tmp1 = gsl_matrix_complex_calloc(N,T);
     gsl_matrix_complex_memcpy(tmp1,y);
+
     // y - I_b
     gsl_matrix_complex_sub(tmp1,I_b);
-    
+
     //N0 + zeta
     gsl_matrix* tmp2;
     tmp2 = gsl_matrix_calloc(N,T);
@@ -100,7 +102,7 @@ void culc_z()
     }
     
     gsl_matrix_add(tmp2,zeta);
-    
+    // printf("%f %f\n",culc_abs2_all_element(N,T,tmp1),culc_abs2_all_element_real(N,T,tmp2));
     
     //z = (y - I_b)/(N0 + zeta)
     for (n = 0; n < N; ++n)
@@ -112,7 +114,7 @@ void culc_z()
             gsl_matrix_complex_set(z,n,t,tmp3);
         }
     }
-
+    // printf("%f\n",culc_abs2_all_element(N,T,z));
     // PrintMatrix(stdout,N,T,z);
     tmp1 = GSLMatrixFree(tmp1);
     tmp2 = GSLRealMatrixFree(tmp2);
@@ -131,7 +133,6 @@ double fk(double u,double v)
 
     ans = t1/t2;
 
-
     return ans;
 }
 
@@ -144,13 +145,13 @@ double diff_fk(double u,double v)
     e2 = exp(-2*a_k*u/v);
     e3 = exp(a_k*a_k/v);
 
-    t1 = 2*a_k/v*(e1*(a_k-1)+e2*(a_k-1));
+    t1 = 2 * a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
     t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
 
     t2 = t2 * t2;
 
     ans = t1/t2; 
-    // printf("%d %f %f %f %f %e\n",Repeat_flg,u,v,t1,t2,ans);
+
     return ans;
 }
 
@@ -174,6 +175,8 @@ gsl_complex A(gsl_complex arg,int k,int t)
                     * diff_fk(GSL_IMAG(gsl_matrix_complex_get(x_b,k,t))
                         ,v
                     );
+
+
         return ans;
     }
 }
@@ -221,6 +224,8 @@ void culc_I()
                             ,k
                             ,t
                         );
+
+
                 //xi_b * A
                 tmp3 = gsl_complex_mul(tmp3,tmp4);
                 //h_hとかけ合わせる
@@ -243,11 +248,14 @@ void culc_I()
 
             //I_bから引く
             tmp3 = gsl_complex_sub(gsl_matrix_complex_get(I_b,n,t),tmp2);
+
+            
             //I_bにset
             gsl_matrix_complex_set(I_b,n,t,tmp3);
 
         }
     }
+
 
     h_h_conju = GSLMatrixFree(h_h_conju);
 }
@@ -388,6 +396,7 @@ void culc_xi_b()
             }
             tmp1 = tmp2/(double)N;
             gsl_matrix_set(xi_b,k,t,1/tmp1);
+            printf("%f %f\n",tmp1 ,1/tmp1);
         }
     }
 
@@ -437,6 +446,7 @@ void culc_x_b()
                 sec2 = gsl_complex_mul_real(gsl_matrix_complex_get(x_h,k,t),tmp2);
 
                 gsl_matrix_complex_set(x_b,k,t,gsl_complex_add(sec1,sec2));
+
             }
         }
     }
@@ -481,37 +491,39 @@ void culc_x_h()
         }
 
     }
+
 }
 //------------------通信路推定器----------------------------------
-void channel_estimation()
+void channel_estimation(FILE *fp_x)
 {
     culc_zata();
     culc_I();
     culc_z();
+
+    // culc_eta();
+    // culc_h_h();
     
     
-    culc_eta();
-    culc_h_h();
-    
-    /*
     gsl_matrix_set_zero(eta);
     gsl_matrix_complex_memcpy(h_h,h);
-    */
+    
 }
 
 //------------------データ推定器----------------------------------
-void data_estimation()
+void data_estimation(FILE *fp_x)
 {
     culc_zata();
     culc_I();
     culc_z();
-    
+
+    // PrintRealMatrix(fp_x,K,T,pilot);
+    // PrintRealMatrix(fp_x,K,T,xi);
+    // PrintMatrix(fp_x,N,T,z);
     culc_xi_b();
     culc_x_b();
     culc_xi();
     culc_x_h();
-    // PrintRealMatrix(stdout,K,T,xi_b);
-    // PrintMatrix(stdout,K,T,x_b);
+
 }
 //---------------------------------------------------------------
 int main(int argc, char *argv[])
@@ -528,16 +540,23 @@ int main(int argc, char *argv[])
     char etc[100];
     char sn_bit_err[100];
     
-    int i,j,l;
-    int count_h = 1;
-    int count_x = 1;
-   
-    init(atof(argv[1]));
+    int i,j,l,k;
 
-    sprintf(mse_h,"./data/20161115/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(bit_err,"./data/20161115/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(etc,"./data/20161115/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(sn_bit_err,"./data/20161115/sn_bit_err_N%d_K%d_T%d_Tp%d.dat",N,K,T,Tp);
+
+    //通信路推定
+    double  *mse_h_n = (double *)malloc( sizeof(double) *BIG_LOOP*SMALL_LOOP );
+    //BER
+    double  *bit_err_n = (double *)malloc( sizeof(double) *BIG_LOOP*SMALL_LOOP );
+
+
+    //乱数初期化
+    RandomNumberInitialization(2);
+   
+    N0 = Pk/atof(argv[1]);
+    sprintf(mse_h,"./data/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(bit_err,"./data/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(etc,"./data/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
+    sprintf(sn_bit_err,"./data/sn_bit_err_N%d_K%d_T%d_Tp%d.dat",N,K,T,Tp);
     
     if ((fp_mse_h = fopen(mse_h, "w")) == NULL) {
         printf("can not open%s\n",mse_h);
@@ -556,63 +575,82 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    // PrintMatrix(stdout,N,T,x_h);
-    //x^2の計算
-    abs2_matrix(x_h,x_h_abs2,K,T);
-    abs2_matrix(h_h,h_h_abs2,N,K);
+
 
    
 
     clock_t start,end;
     start = clock();
-    
-    for (i = 0; i < 3; ++i)
+
+    for (k = 0; k < ENSEMBLE; ++k)
     {
-        
-        //通信路推定
-        for (j = 0; j < 100; ++j)
-        {
-            
-            channel_estimation();
-            fprintf(fp_mse_h, "%d %e\n",count_h,culc_complex_mse(N,K,h,h_h));
-            ++count_h;
-            // PrintMatrix(stdout,N,K,h_h)
-            // PrintMatrix(stdout,N,T,I_b);;
-            abs2_matrix(h_h,h_h_abs2,N,K);
-
-        }
-        PrintMatrix(stdout,N,K,h_h);
-        // PrintMatrix(stdout,N,K,h);
-        Repeat_flg = 1;
+        init(atof(argv[1]));
+        abs2_matrix(x_h,x_h_abs2,K,T);
+        abs2_matrix(h_h,h_h_abs2,N,K);
+        int count_h = 0;
+        int count_x = 0;
+        Repeat_flg = 0;
 
 
-        //データ推定
-        for (j = 0; j < 100; ++j)
+        for (i = 0; i < BIG_LOOP; ++i)
         {
 
+            //通信路推定
+            for (j = 0; j < SMALL_LOOP; ++j)
+            {
+                
+                channel_estimation(fp_x);
+                // fprintf(fp_mse_h, "%d %e\n",count_h,culc_complex_mse(N,K,h,h_h));
+                mse_h_n[count_h] += culc_complex_mse(N,K,h,h_h)/(double)ENSEMBLE;
+                ++count_h;
+                abs2_matrix(h_h,h_h_abs2,N,K);
 
-            data_estimation();
-            fprintf(fp_bit_err, "%d %lf\n",count_x,culc_bit_error_rate());
-            ++count_x;
-            abs2_matrix(x_h,x_h_abs2,K,T);
-            // PrintMatrix(stdout,N,K,h_h);
+            }
+            // PrintMatrix(fp_x,N,K,h_h);
+            Repeat_flg = 1;
+
+            //データ推定
+            for (j = 0; j < SMALL_LOOP; ++j)
+            {
+                data_estimation(fp_x);
+                // fprintf(fp_bit_err, "%d %lf\n",count_x,culc_bit_error_rate());
+                bit_err_n[count_x] += culc_bit_error_rate()/(double)ENSEMBLE;
+                ++count_x;
+                abs2_matrix(x_h,x_h_abs2,K,T);
+                // PrintMatrix(stdout,N,K,h_h);
+                    // PrintRealMatrix(fp_x,K,T,xi_b);
+                    // PrintMatrix(fp_x,N,T,I_b);
+                    // PrintRealMatrix(fp_x,K,T,zeta);
+                PrintMatrix(fp_x,K,T,x_h);
+            }
+
+
         }
-        PrintMatrix(stdout,K,T,x_h);
-        PrintMatrix(fp_x,K,T,x_h);
-        PrintMatrix(fp_x,K,T,x);
+        finish();
     }
+
     end = clock();
-    PrintRealMatrix(fp_x,K,T,pilot);
+
+    //ファイル書き込み
+    for (i = 0; i < BIG_LOOP*SMALL_LOOP; ++i)
+    {
+        fprintf(fp_mse_h,"%d %lf\n",i+1,mse_h_n[i]);
+        fprintf(fp_bit_err, "%d %lf\n",i+1,bit_err_n[i]);
+    }
+
+    // PrintRealMatrix(fp_x,K,T,pilot);
     // PrintRealMatrix(fp_x,K,T,xi);
     // PrintMatrix(stdout,N,K,h_h);
     // PrintMatrix(stdout,N,K,h);
-    printf("BER = %g Computation time = %f[sec]\n",culc_bit_error_rate(),(double)(end-start)/ CLOCKS_PER_SEC);
-    fprintf(fp_sn_bit_err,"%f %f\n",10*log10(Pk/N0),culc_bit_error_rate());
 
-    finish();
+    printf("BER = %g Computation time = %f[sec]\n",bit_err_n[BIG_LOOP*SMALL_LOOP-1],(double)(end-start)/ CLOCKS_PER_SEC);
+    // fprintf(fp_sn_bit_err,"%f %f\n",10*log10(Pk/N0),culc_bit_error_rate());
+
     fclose(fp_mse_h);
     fclose(fp_bit_err);
     fclose(fp_x);
     fclose(fp_sn_bit_err);
+    free(mse_h_n);
+    free(bit_err_n); 
     return 0;
 }

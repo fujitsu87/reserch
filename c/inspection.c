@@ -46,3 +46,35 @@ double culc_bit_error_rate()
 	ans = (double)count/(double)num;
 	return ans;
 }
+
+double culc_abs2_all_element(int n,int m,gsl_matrix_complex * A)
+{
+	int num = n*m;
+	int i,j;
+	double ans = 0;
+	for (i = 0; i < n; ++i)
+	{
+		for (j = 0; j < m; ++j)
+		{
+			ans += gsl_complex_abs2(gsl_matrix_complex_get(A,i,j));
+		}
+	}
+	ans = ans/num;
+	return ans;
+}
+
+double culc_abs2_all_element_real(int n,int m,gsl_matrix * A)
+{
+	int num = n*m;
+	int i,j;
+	double ans = 0;
+	for (i = 0; i < n; ++i)
+	{
+		for (j = 0; j < m; ++j)
+		{
+			ans += gsl_matrix_get(A,i,j)*gsl_matrix_get(A,i,j);
+		}
+	}
+	ans = ans/num;
+	return ans;
+}

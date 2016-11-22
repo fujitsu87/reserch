@@ -1,17 +1,25 @@
 //基地局のアンテナの数
-#define N 128
+#define N 10
 //ユーザ数
-#define K 32
+#define K 16
 //離散時間ステップ数
-#define T 200
+#define T 100
 //pilot信号時間長さ
-#define Tp 80
+#define Tp 1
 //ユーザ分割数
 #define DK 2
+//アンサンブル平均回数
+#define ENSEMBLE 5
+
+//反復回数 おおまわり
+#define BIG_LOOP 3
+//反復回数　小さいループ
+#define SMALL_LOOP 30
+
 //pilot信号の値
 const double Pk = 1.0;
 
-//ノイズ　10dB
+//ノイズ
 double N0;
 //信号が送られる確率
 const double rho_k = 1.0;
@@ -123,7 +131,7 @@ void init_x()
 			{
 				GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
 			}
-			gsl_matrix_complex_set(x ,k,t,z);
+			gsl_matrix_complex_set(x,k,t,z);
 		}
 	}
 	// PrintMatrix(stdout,K,T,x);
@@ -223,8 +231,7 @@ void init(double sn)
 
 	a_k = sqrt(Pk/(2*rho_k));
 	
-	//乱数初期化
-	RandomNumberInitialization(0);
+	
 	
 	//通信路h初期化
 	init_h();
