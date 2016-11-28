@@ -87,11 +87,11 @@ void culc_z()
 
     // y - I_b
     gsl_matrix_complex_sub(tmp1,I_b);
-
     //N0 + zeta
     gsl_matrix* tmp2;
     tmp2 = gsl_matrix_calloc(N,T);
     int n,t;
+
     for (n = 0; n < N; ++n)
     {
         for (t = 0; t < T; ++t)
@@ -102,7 +102,6 @@ void culc_z()
     }
     
     gsl_matrix_add(tmp2,zeta);
-    // printf("%f %f\n",culc_abs2_all_element(N,T,tmp1),culc_abs2_all_element_real(N,T,tmp2));
     
     //z = (y - I_b)/(N0 + zeta)
     for (n = 0; n < N; ++n)
@@ -114,10 +113,13 @@ void culc_z()
             gsl_matrix_complex_set(z,n,t,tmp3);
         }
     }
-    // printf("%f\n",culc_abs2_all_element(N,T,z));
+
+
     // PrintMatrix(stdout,N,T,z);
     tmp1 = GSLMatrixFree(tmp1);
     tmp2 = GSLRealMatrixFree(tmp2);
+
+    // printf("%f\n",culc_abs2_all_element(N,T,z));
 }
 //---------------fk関数---------------------------------------------
 double fk(double u,double v)
@@ -396,9 +398,10 @@ void culc_xi_b()
             }
             tmp1 = tmp2/(double)N;
             gsl_matrix_set(xi_b,k,t,1/tmp1);
-            printf("%f %f\n",tmp1 ,1/tmp1);
         }
     }
+
+    // printf("%f\n",culc_abs2_all_element_real(K,T,xi_b) );
 
 }
 //------------------culc_x_b------------------------------------
@@ -516,14 +519,10 @@ void data_estimation(FILE *fp_x)
     culc_I();
     culc_z();
 
-    // PrintRealMatrix(fp_x,K,T,pilot);
-    // PrintRealMatrix(fp_x,K,T,xi);
-    // PrintMatrix(fp_x,N,T,z);
     culc_xi_b();
     culc_x_b();
     culc_xi();
     culc_x_h();
-
 }
 //---------------------------------------------------------------
 int main(int argc, char *argv[])
@@ -539,6 +538,7 @@ int main(int argc, char *argv[])
     char bit_err[100];
     char etc[100];
     char sn_bit_err[100];
+    char output_path[100];
     
     int i,j,l,k;
 
@@ -548,15 +548,23 @@ int main(int argc, char *argv[])
     //BER
     double  *bit_err_n = (double *)malloc( sizeof(double) *BIG_LOOP*SMALL_LOOP );
 
+    //I_b
+    double  *I_b_n = (double *)malloc( sizeof(double) *BIG_LOOP*SMALL_LOOP*2 );
+
+    //zeta
+    double  *zeta_n = (double *)malloc( sizeof(double) *BIG_LOOP*SMALL_LOOP*2 );
+
 
     //乱数初期化
     RandomNumberInitialization(2);
    
     N0 = Pk/atof(argv[1]);
-    sprintf(mse_h,"./data/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(bit_err,"./data/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(etc,"./data/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",N,K,T,Tp,Pk/N0);
-    sprintf(sn_bit_err,"./data/sn_bit_err_N%d_K%d_T%d_Tp%d.dat",N,K,T,Tp);
+    sprintf(output_path,"./data/%s/",argv[2]);
+    mkdir(output_path);
+    sprintf(mse_h,"./data/%s/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
+    sprintf(bit_err,"./data/%s/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
+    sprintf(etc,"./data/%s/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
+    sprintf(sn_bit_err,"./data/%s/sn_bit_err_N%d_K%d_T%d_Tp%d.dat",argv[2],N,K,T,Tp);
     
     if ((fp_mse_h = fopen(mse_h, "w")) == NULL) {
         printf("can not open%s\n",mse_h);
@@ -589,6 +597,7 @@ int main(int argc, char *argv[])
         abs2_matrix(h_h,h_h_abs2,N,K);
         int count_h = 0;
         int count_x = 0;
+        int count_all = 0;
         Repeat_flg = 0;
 
 
@@ -605,9 +614,18 @@ int main(int argc, char *argv[])
                 ++count_h;
                 abs2_matrix(h_h,h_h_abs2,N,K);
 
+                I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
+                zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
+                ++count_all;
+
             }
             // PrintMatrix(fp_x,N,K,h_h);
             Repeat_flg = 1;
+
+            gsl_matrix_complex_set_zero(z);
+            gsl_matrix_complex_set_zero(I_b);
+            gsl_matrix_set_zero(zeta);
+
 
             //データ推定
             for (j = 0; j < SMALL_LOOP; ++j)
@@ -617,12 +635,17 @@ int main(int argc, char *argv[])
                 bit_err_n[count_x] += culc_bit_error_rate()/(double)ENSEMBLE;
                 ++count_x;
                 abs2_matrix(x_h,x_h_abs2,K,T);
-                // PrintMatrix(stdout,N,K,h_h);
-                    // PrintRealMatrix(fp_x,K,T,xi_b);
-                    // PrintMatrix(fp_x,N,T,I_b);
-                    // PrintRealMatrix(fp_x,K,T,zeta);
-                PrintMatrix(fp_x,K,T,x_h);
+
+                I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
+                zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
+                ++count_all;
             }
+
+            gsl_matrix_complex_set_zero(z);
+            gsl_matrix_complex_set_zero(I_b);
+            gsl_matrix_set_zero(zeta);
+
+
 
 
         }
@@ -636,6 +659,10 @@ int main(int argc, char *argv[])
     {
         fprintf(fp_mse_h,"%d %lf\n",i+1,mse_h_n[i]);
         fprintf(fp_bit_err, "%d %lf\n",i+1,bit_err_n[i]);
+    }
+    for (i = 0; i < BIG_LOOP*SMALL_LOOP*2; ++i)
+    {
+        printf("%f %f\n",I_b_n[i],zeta_n[i] );
     }
 
     // PrintRealMatrix(fp_x,K,T,pilot);

@@ -1,15 +1,15 @@
 //基地局のアンテナの数
-#define N 10
+#define N 100
 //ユーザ数
-#define K 16
+#define K 160
 //離散時間ステップ数
-#define T 100
+#define T 800
 //pilot信号時間長さ
-#define Tp 1
+#define Tp 799
 //ユーザ分割数
 #define DK 2
 //アンサンブル平均回数
-#define ENSEMBLE 5
+#define ENSEMBLE 100
 
 //反復回数 おおまわり
 #define BIG_LOOP 3

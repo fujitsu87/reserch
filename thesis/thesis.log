@@ -1,4 +1,4 @@
-This is e-pTeX, Version 3.14159265-p3.5-130605-2.6 (utf8.euc) (TeX Live 2015/dev/Debian) (preloaded format=platex 2016.9.11)  22 NOV 2016 09:22
+This is e-pTeX, Version 3.14159265-p3.5-130605-2.6 (utf8.euc) (TeX Live 2015/dev/Debian) (preloaded format=platex 2016.9.11)  29 NOV 2016 02:40
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -201,8 +201,7 @@ File: lstlang1.sty 2014/09/06 1.5e listings language file
 )
 (/usr/share/texlive/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2014/09/06 1.5e (Carsten Heinz)
-) (./thesis.aux
-(./abstract.aux) (./derivation.aux))
+) (./thesis.aux)
 \openout1 = `thesis.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 43.
@@ -260,9 +259,9 @@ LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
 (Font)              scaled to size 23.90964pt on input line 46.
  (./thesis.toc
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 6.72699pt on input line 3.
+(Font)              scaled to size 6.72699pt on input line 2.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 4.805pt on input line 3.
+(Font)              scaled to size 4.805pt on input line 2.
 )
 \tf@toc=\write3
 \openout3 = `thesis.toc'.
@@ -271,23 +270,15 @@ LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
 [1
 
 ]
-\openout2 = `abstract.aux'.
-
- (./abstract.tex
 第1章
 LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 1.
+(Font)              scaled to size 19.9311pt on input line 49.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 1.
+(Font)              scaled to size 19.9311pt on input line 49.
 LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 1.
+(Font)              scaled to size 19.9311pt on input line 49.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 1.
-) [2
-
-
-]
-第2章
+(Font)              scaled to size 19.9311pt on input line 49.
 LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
 (Font)              scaled to size 13.83836pt on input line 50.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
@@ -296,40 +287,44 @@ LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
 (Font)              scaled to size 13.83836pt on input line 50.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
 (Font)              scaled to size 13.83836pt on input line 50.
-[3
-
+File: ./mimo.eps Graphic file (type eps)
+<./mimo.eps>
+LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
+(Font)              scaled to size 8.64899pt on input line 60.
+LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
+(Font)              scaled to size 8.64899pt on input line 60.
+ [2
 
 ]
 File: ./matrix.eps Graphic file (type eps)
- <./matrix.eps>
-LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 70.
-LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 70.
- [4]
-\openout2 = `derivation.aux'.
+ <./matrix.eps> [3] [4]
+第2章
+(./precondition.tex
+LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
+(Font)              scaled to size 11.53198pt on input line 2.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 11.53198pt on input line 2.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 6.72699pt on input line 3.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 4.805pt on input line 3.
+ [5
 
- (./derivation.tex
-第3章
-) [5
-
-
-]
+] [6]) (./derivation.tex) [7]
 Missing character: There is no ^^c3 in font cmr10!
 Missing character: There is no ^^a9 in font cmr10!
 Missing character: There is no ^^c3 in font cmr10!
 Missing character: There is no ^^a1 in font cmr10!
- [6
+ [8
 
-
-] (./thesis.aux (./abstract.aux) (./derivation.aux)) ) 
+] (./thesis.aux) ) 
 Here is how much of TeX's memory you used:
- 3115 strings out of 494934
- 40113 string characters out of 6180149
- 131063 words of memory out of 5000000
- 6426 multiletter control sequences out of 15000+600000
- 20325 words of font info for 94 fonts, out of 8000000 for 9000
+ 3145 strings out of 494934
+ 40389 string characters out of 6180149
+ 138063 words of memory out of 5000000
+ 6453 multiletter control sequences out of 15000+600000
+ 23854 words of font info for 108 fonts, out of 8000000 for 9000
  269 hyphenation exceptions out of 8191
- 27i,6n,49p,426b,344s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 27i,11n,49p,825b,345s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on thesis.dvi (7 pages, 12028 bytes).
+Output written on thesis.dvi (9 pages, 24120 bytes).
