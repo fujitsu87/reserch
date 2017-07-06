@@ -1,8 +1,8 @@
-This is e-pTeX, Version 3.14159265-p3.5-130605-2.6 (utf8.euc) (TeX Live 2015/dev/Debian) (preloaded format=platex 2016.9.11)  29 NOV 2016 02:40
+This is e-pTeX, Version 3.14159265-p3.5-130605-2.6 (utf8.euc) (TeX Live 2015/dev/Debian) (preloaded format=platex 2016.9.11)  25 DEC 2016 18:08
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
-**thesis.tex
+**thesis
 (./thesis.tex
 pLaTeX2e <2006/11/10> (based on LaTeX2e <2014/05/01> patch level 0)
 Babel <3.9l> and hyphenation patterns for 11 languages loaded.
@@ -175,6 +175,15 @@ Package: jlisting 2006/02/20 0.2 (Thor)
 (/usr/share/texlive/texmf-dist/tex/latex/docmute/docmute.sty
 Package: docmute 2012/03/22 v1.4 Input stand-alone documents
 )
+(/usr/share/texlive/texmf-dist/tex/latex/tools/bm.sty
+Package: bm 2014/10/28 v1.1c Bold Symbol Support (DPC/FMi)
+\symboldoperators=\mathgroup7
+\symboldletters=\mathgroup8
+\symboldsymbols=\mathgroup9
+\symboldmincho=\mathgroup10
+LaTeX Font Info:    Redeclaring math alphabet \mathbf on input line 137.
+LaTeX Info: Redefining \bm on input line 203.
+)
 (/usr/share/texlive/texmf-dist/tex/latex/graphics/graphicx.sty
 Package: graphicx 2014/04/25 v1.0g Enhanced LaTeX Graphics (DPC,SPQR)
 
@@ -201,7 +210,8 @@ File: lstlang1.sty 2014/09/06 1.5e listings language file
 )
 (/usr/share/texlive/texmf-dist/tex/latex/listings/lstmisc.sty
 File: lstmisc.sty 2014/09/06 1.5e (Carsten Heinz)
-) (./thesis.aux)
+) (./thesis.aux
+(./abstract.aux) (./acknowledgment.aux))
 \openout1 = `thesis.aux'.
 
 LaTeX Font Info:    Checking defaults for OML/cmm/m/it on input line 43.
@@ -241,90 +251,149 @@ LaTeX Font Info:    Try loading font information for U+msb on input line 44.
 
 (/usr/share/texlive/texmf-dist/tex/latex/amsfonts/umsb.fd
 File: umsb.fd 2013/01/14 v3.01 AMS symbols B
+)
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 11.53198pt on input line 44.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 7.68799pt on input line 44.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 5.76599pt on input line 44.
+ [1
+
+
+]
+\openout2 = `abstract.aux'.
+
+ (./abstract.tex
+LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
+(Font)              scaled to size 23.90964pt on input line 1.
+LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
+(Font)              scaled to size 23.90964pt on input line 1.
+LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
+(Font)              scaled to size 23.90964pt on input line 1.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 23.90964pt on input line 1.
+LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
+(Font)              scaled to size 6.72699pt on input line 10.
+LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
+(Font)              scaled to size 4.805pt on input line 10.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 9.60999pt on input line 10.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 6.72699pt on input line 10.
+LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
+(Font)              scaled to size 4.805pt on input line 10.
 ) [1
 
 
 ]
+\openout2 = `acknowledgment.aux'.
+
+ (./acknowledgment.tex) [2
+
+
+
+]
 LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 9.60999pt on input line 46.
-LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 9.60999pt on input line 46.
-LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 23.90964pt on input line 46.
-LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 23.90964pt on input line 46.
-LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 23.90964pt on input line 46.
-LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 23.90964pt on input line 46.
- (./thesis.toc
-LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 6.72699pt on input line 2.
-LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 4.805pt on input line 2.
-)
+(Font)              scaled to size 9.60999pt on input line 48.
+ (./thesis.toc)
 \tf@toc=\write3
 \openout3 = `thesis.toc'.
 
+ [3
 
-[1
 
 ]
 第1章
 LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 49.
+(Font)              scaled to size 19.9311pt on input line 50.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 49.
+(Font)              scaled to size 19.9311pt on input line 50.
 LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 49.
+(Font)              scaled to size 19.9311pt on input line 50.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 19.9311pt on input line 49.
+(Font)              scaled to size 19.9311pt on input line 50.
 LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 13.83836pt on input line 50.
+(Font)              scaled to size 13.83836pt on input line 51.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 13.83836pt on input line 50.
+(Font)              scaled to size 13.83836pt on input line 51.
 LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 13.83836pt on input line 50.
+(Font)              scaled to size 13.83836pt on input line 51.
 LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 13.83836pt on input line 50.
+(Font)              scaled to size 13.83836pt on input line 51.
 File: ./mimo.eps Graphic file (type eps)
 <./mimo.eps>
 LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 60.
+(Font)              scaled to size 8.64899pt on input line 61.
 LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
-(Font)              scaled to size 8.64899pt on input line 60.
- [2
+(Font)              scaled to size 8.64899pt on input line 61.
+ [4
 
 ]
-File: ./matrix.eps Graphic file (type eps)
- <./matrix.eps> [3] [4]
+File: ./shiftedframe.eps Graphic file (type eps)
+ <./shiftedframe.eps> [5] [6]
 第2章
-(./precondition.tex
-LaTeX Font Info:    Font shape `JT1/gt/m/n' will be
-(Font)              scaled to size 11.53198pt on input line 2.
-LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 11.53198pt on input line 2.
-LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 6.72699pt on input line 3.
-LaTeX Font Info:    Font shape `JY1/gt/m/n' will be
-(Font)              scaled to size 4.805pt on input line 3.
- [5
+(./precondition.tex [7
 
-] [6]) (./derivation.tex) [7]
-Missing character: There is no ^^c3 in font cmr10!
-Missing character: There is no ^^a9 in font cmr10!
+] [8]) (./init_messages.tex
+File: ./flow_message.eps Graphic file (type eps)
+ <./flow_message.eps>)
+(./derivation.tex [9] [10]
+第3章
+File: ./message.eps Graphic file (type eps)
+<./message.eps> [11
+
+] [12] [13]) [14] (./result.tex
+第4章
+File: ./data_structure.eps Graphic file (type eps)
+<./data_structure.eps>
+File: ./mse_h.eps Graphic file (type eps)
+ <./mse_h.eps> [15
+
+]
+File: ./mse_h_comparison.eps Graphic file (type eps)
+ <./mse_h_comparison.eps>
+File: ./bit_err.eps Graphic file (type eps)
+
+<./bit_err.eps>
+File: bit_err_comparison.eps Graphic file (type eps)
+ <bit_err_comparison.eps>
+File: ./sn_bit_err.eps Graphic file (type eps)
+ <./sn_bit_err.eps>) [16] [17]
+(./conclusion.tex [18]
+第5章
+) [19
+
+]
+LaTeX Font Info:    Font shape `JT1/mc/m/sl' in size <10> not available
+(Font)              Font shape `JT1/mc/m/n' tried instead on input line 111.
+LaTeX Font Info:    Font shape `JT1/mc/m/n' will be
+(Font)              scaled to size 9.60999pt on input line 111.
+LaTeX Font Info:    Font shape `JY1/mc/m/sl' in size <10> not available
+(Font)              Font shape `JY1/mc/m/n' tried instead on input line 111.
+LaTeX Font Info:    Font shape `JY1/mc/m/n' will be
+(Font)              scaled to size 9.60999pt on input line 111.
+Missing character: There is no ^^ef in font cmr10!
+Missing character: There is no ^^ac in font cmr10!
+Missing character: There is no ^^81 in font cmr10!
+
+Underfull \hbox (badness 5161) in paragraph at lines 119--120
+[]\OT1/cmr/m/n/10 V. Sax-ena, ``Pi-lot Con-tam-i-na-tion and Mit-i-ga-tion Tech
+-niques in Mas-sive MIMO Sys-
+ []
+
 Missing character: There is no ^^c3 in font cmr10!
 Missing character: There is no ^^a1 in font cmr10!
- [8
+[20
 
-] (./thesis.aux) ) 
+] (./thesis.aux (./abstract.aux) (./acknowledgment.aux)) ) 
 Here is how much of TeX's memory you used:
- 3145 strings out of 494934
- 40389 string characters out of 6180149
- 138063 words of memory out of 5000000
- 6453 multiletter control sequences out of 15000+600000
- 23854 words of font info for 108 fonts, out of 8000000 for 9000
+ 3321 strings out of 494934
+ 42682 string characters out of 6180149
+ 139325 words of memory out of 5000000
+ 6587 multiletter control sequences out of 15000+600000
+ 26664 words of font info for 118 fonts, out of 8000000 for 9000
  269 hyphenation exceptions out of 8191
- 27i,11n,49p,825b,345s stack positions out of 5000i,500n,10000p,200000b,80000s
+ 27i,11n,49p,896b,353s stack positions out of 5000i,500n,10000p,200000b,80000s
 
-Output written on thesis.dvi (9 pages, 24120 bytes).
+Output written on thesis.dvi (21 pages, 65712 bytes).

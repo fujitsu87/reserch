@@ -1,23 +1,27 @@
 //基地局のアンテナの数
-#define N 100
+#define N 128
 //ユーザ数
-#define K 160
+#define K 32
 //離散時間ステップ数
-#define T 800
+#define T 300
 //pilot信号時間長さ
-#define Tp 799
-//ユーザ分割数
+#define Tp 128
+//隣接基地局数
 #define DK 2
 //アンサンブル平均回数
-#define ENSEMBLE 100
+#define ENSEMBLE 10
 
 //反復回数 おおまわり
 #define BIG_LOOP 3
 //反復回数　小さいループ
-#define SMALL_LOOP 30
+#define H_LOOP 30
+#define X_LOOP 10
 
 //pilot信号の値
 const double Pk = 1.0;
+
+//allpilotかどうか　0...shift 1...all contamination...2
+const int Pilot_flg = 0;
 
 //ノイズ
 double N0;
@@ -26,7 +30,7 @@ const double rho_k = 1.0;
 
 double a_k;
 
-int Repeat_flg = 0;
+int Repeat_flg = 1;
 
 gsl_matrix_complex* x;
 gsl_matrix_complex* h;
@@ -77,43 +81,85 @@ void init_pilot()
 		{
 			
 			
-			// //左下のpilot信号
-			if(k >= K/DK && t < Tp)
-			{
-				gsl_matrix_set(pilot,k,t,1);
+			if(Pilot_flg == 1){
+				// 左のpilot信号
+				if(t < Tp/2)
+				{
+					gsl_matrix_set(pilot,k,t,1);
+				}
+				//右のpilot信号
+				else if(t >= T-(Tp/2))
+				{
+					gsl_matrix_set(pilot,k,t,1);
+				}
+				else{
+					gsl_matrix_set(pilot,k,t,0);
+				}
 			}
-			//右上のpilot信号
-			else if(k < K/DK && t >= T-Tp)
-			{
-				gsl_matrix_set(pilot,k,t,1);
+			if(Pilot_flg == 2){
+				// 左のpilot信号
+				if(t < Tp)
+				{
+					gsl_matrix_set(pilot,k,t,1);
+				}
+				else{
+					gsl_matrix_set(pilot,k,t,0);
+				}
 			}
-			else{
-				gsl_matrix_set(pilot,k,t,0);
+			else {
+				// //左下のpilot信号
+				if(k >= K/DK && t < Tp)
+				{
+					gsl_matrix_set(pilot,k,t,1);
+				}
+				//右上のpilot信号
+				else if(k < K/DK && t >= T-Tp)
+				{
+					gsl_matrix_set(pilot,k,t,1);
+				}
+				else{
+					gsl_matrix_set(pilot,k,t,0);
+				}
 			}
 			
-			
-			/*
-			// 左のpilot信号
-			if(t < Tp)
-			{
-				gsl_matrix_set(pilot,k,t,1);
-			}
-			//右のpilot信号
-			else if(t >= T-Tp)
-			{
-				gsl_matrix_set(pilot,k,t,1);
-			}
-			else{
-				gsl_matrix_set(pilot,k,t,0);
-			}
-			*/
 		}
+	}
+}
+
+int decision_hadamard_size()
+{
+	int n = 0;
+	int matrix_size = 1;
+	while(1)
+	{
+		if(matrix_size >= Tp)
+		{
+			return n;
+		}
+		matrix_size = matrix_size*2;
+		++n;
 	}
 }
 
 void init_x()
 {
 	int k,t;
+	int n = decision_hadamard_size();
+	int size = (int)pow(2,n);
+	int *P = (int *)malloc(sizeof(int)*size);
+
+	gsl_matrix* orthogonal = gsl_matrix_calloc(size,size);
+	gsl_matrix* re_pilot = gsl_matrix_calloc(size,size);
+	gsl_matrix* im_pilot = gsl_matrix_calloc(size,size);
+	orthogonal = hadamard(n);
+	
+	Permutation(size,P);
+	GslMatrixRealInterleaver(size,size,orthogonal,re_pilot,P);
+	Permutation(size,P);
+	GslMatrixRealInterleaver(size,size,orthogonal,im_pilot,P);
+	free(orthogonal);
+
+
 	for (k = 0; k < K; ++k)
 	{
 		for (t = 0; t < T; ++t)
@@ -122,19 +168,41 @@ void init_x()
 			double tmp[2] = {-1.0,1.0};
 			gsl_complex z;
 
-			// //左下のpilot信号
-			if(k >= K/DK && t < Tp)
+			//右のpilot 全部パイロットの場合
+			if(Pilot_flg == 1 && t >= T-(Tp/2))
+			{
+				z = gsl_matrix_complex_get(x,k,T-1-t);
+			}
+			//右上のpilot信号　半分パイロットの場合
+			else if(Pilot_flg == 0 && k < K/DK && t >= T-Tp)
+			{
+				GSL_SET_COMPLEX(&z,a_k*gsl_matrix_get(re_pilot,k,t-(T-Tp)),a_k*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
+				// GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
+			}
+			//左下のpilot信号　半分パイロットの場合
+			else if(Pilot_flg == 0 && k >= K/DK && t < Tp)
 			{
 				z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
 			}
+			//下のpilot信号 contaminationの場合
+			else if(Pilot_flg == 2 && k >= K/DK)
+			{
+				z = gsl_matrix_complex_get(x,k-K/DK,t);
+			}
 			else 
 			{
-				GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
+				if(rho_k > gsl_rng_uniform(RAN))
+					GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
+				else GSL_SET_COMPLEX(&z,0,0);
 			}
 			gsl_matrix_complex_set(x,k,t,z);
 		}
 	}
+	free(re_pilot);
+	free(im_pilot);
 	// PrintMatrix(stdout,K,T,x);
+	// PrintRealMatrix(stdout,size,size,re_pilot);
+	// PrintRealMatrix(stdout,size,size,im_pilot);
 }
 
 void init_w()
@@ -230,7 +298,6 @@ void init(double sn)
 	pilot = gsl_matrix_calloc(K,T);
 
 	a_k = sqrt(Pk/(2*rho_k));
-	
 	
 	
 	//通信路h初期化

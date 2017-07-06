@@ -1,0 +1,4 @@
+MSE = 0 
+mse_standard_deviation = -nan
+BER = 0.0010016 
+ber_standard_deviation = inf

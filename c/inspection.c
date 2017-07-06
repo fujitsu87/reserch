@@ -16,7 +16,7 @@ double culc_complex_mse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * 
 	return ans;
 }
 
-double culc_bit_error_rate()
+double culc_bit_error_rate(FILE* fp_bit_err)
 {
 	int k,t;
 	double ans = 0;
@@ -38,6 +38,10 @@ double culc_bit_error_rate()
 				if(gsl_matrix_complex_get(x_h,k,t).dat[1]*gsl_matrix_complex_get(x,k,t).dat[1] < 0 )
 				{
 					++count;
+				}
+				if(isnan(gsl_matrix_complex_get(x_h,k,t).dat[1]*gsl_matrix_complex_get(x,k,t).dat[1])){
+					fprintf(fp_bit_err,"exist nan\n");
+					exit(0);
 				}
 				num = num + 2;
 			}
@@ -77,4 +81,40 @@ double culc_abs2_all_element_real(int n,int m,gsl_matrix * A)
 	}
 	ans = ans/num;
 	return ans;
+}
+
+void output_estimatedata(FILE *fp)
+{
+	int k,t;
+	for (k = 0; k < K; ++k)
+	{
+		for (t = 0; t < T; ++t)
+		{
+			if(gsl_matrix_get(pilot,k,t) == 0)
+				fprintf(fp,"%f %f\n",gsl_matrix_complex_get(x_h,k,t).dat[0],gsl_matrix_complex_get(x_h,k,t).dat[1]);
+		}
+	}
+
+}
+
+void culc_standard_deviation(double *standard_deviation,double *mse_h_n,double * mse_h_en,double *bit_err_n,double *bit_err_en)
+{
+	int i;
+	 //MSEとBER分散と標準偏差を求める
+    double variance[2]={0,0};
+    for (i = 0; i < ENSEMBLE; ++i)
+    {
+        double tmp[2];
+        tmp[0] = mse_h_n[BIG_LOOP*H_LOOP-1] - mse_h_en[i];
+        tmp[1] = bit_err_n[BIG_LOOP*H_LOOP-1] - bit_err_en[i];
+
+        variance[0] += tmp[0] * tmp[0];
+        variance[1] += tmp[1] * tmp[1];
+    }
+    variance[0] = variance[0] /((double)ENSEMBLE -1);
+    variance[1] = variance[1] /((double)ENSEMBLE -1); 
+    standard_deviation[0] = sqrt(variance[0]);
+    standard_deviation[1] = sqrt(variance[1]);
+    // PrintMatrix(stdout,K,T,x_h);
+
 }
