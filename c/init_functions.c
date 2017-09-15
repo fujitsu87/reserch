@@ -1,15 +1,15 @@
 //基地局のアンテナの数
-#define N 128
+#define N 256
 //ユーザ数
 #define K 32
 //離散時間ステップ数
-#define T 300
-//pilot信号時間長さ
+#define T 1000
+//pilot信号時間長さ(必ずTP>Kにする)
 #define Tp 128
 //隣接基地局数
 #define DK 2
 //アンサンブル平均回数
-#define ENSEMBLE 10
+#define ENSEMBLE 1
 
 //反復回数 おおまわり
 #define BIG_LOOP 3
@@ -17,7 +17,7 @@
 #define H_LOOP 30
 #define X_LOOP 10
 
-//pilot信号の値
+//電力
 const double Pk = 1.0;
 
 //allpilotかどうか　0...shift 1...all contamination...2
@@ -31,6 +31,9 @@ const double rho_k = 1.0;
 double a_k;
 
 int Repeat_flg = 1;
+
+//ダンピング係数
+double a = 1.0;
 
 gsl_matrix_complex* x;
 gsl_matrix_complex* h;
@@ -79,16 +82,9 @@ void init_pilot()
 	{
 		for (t = 0; t < T; ++t)
 		{
-			
-			
 			if(Pilot_flg == 1){
 				// 左のpilot信号
-				if(t < Tp/2)
-				{
-					gsl_matrix_set(pilot,k,t,1);
-				}
-				//右のpilot信号
-				else if(t >= T-(Tp/2))
+				if(t < Tp)
 				{
 					gsl_matrix_set(pilot,k,t,1);
 				}
@@ -96,7 +92,7 @@ void init_pilot()
 					gsl_matrix_set(pilot,k,t,0);
 				}
 			}
-			if(Pilot_flg == 2){
+			else if(Pilot_flg == 2){
 				// 左のpilot信号
 				if(t < Tp)
 				{
@@ -147,6 +143,7 @@ void init_x()
 	int n = decision_hadamard_size();
 	int size = (int)pow(2,n);
 	int *P = (int *)malloc(sizeof(int)*size);
+	double p_p = Pk/sqrt(2);
 
 	gsl_matrix* orthogonal = gsl_matrix_calloc(size,size);
 	gsl_matrix* re_pilot = gsl_matrix_calloc(size,size);
@@ -159,7 +156,6 @@ void init_x()
 	GslMatrixRealInterleaver(size,size,orthogonal,im_pilot,P);
 	free(orthogonal);
 
-
 	for (k = 0; k < K; ++k)
 	{
 		for (t = 0; t < T; ++t)
@@ -168,15 +164,21 @@ void init_x()
 			double tmp[2] = {-1.0,1.0};
 			gsl_complex z;
 
-			//右のpilot 全部パイロットの場合
-			if(Pilot_flg == 1 && t >= T-(Tp/2))
+			//左のpilot 全部パイロットの場合
+			if(Pilot_flg == 1 && t < Tp)
 			{
-				z = gsl_matrix_complex_get(x,k,T-1-t);
+				// z = gsl_matrix_complex_get(x,k,T-1-t);
+				// 左のpilot信号
+				if(t < Tp)
+				{
+					GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t),p_p*gsl_matrix_get(im_pilot,k,t));
+				}
+	
 			}
 			//右上のpilot信号　半分パイロットの場合
 			else if(Pilot_flg == 0 && k < K/DK && t >= T-Tp)
 			{
-				GSL_SET_COMPLEX(&z,a_k*gsl_matrix_get(re_pilot,k,t-(T-Tp)),a_k*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
+				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t-(T-Tp)),p_p*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
 				// GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
 			}
 			//左下のpilot信号　半分パイロットの場合
@@ -200,8 +202,7 @@ void init_x()
 	}
 	free(re_pilot);
 	free(im_pilot);
-	// PrintMatrix(stdout,K,T,x);
-	// PrintRealMatrix(stdout,size,size,re_pilot);
+	// PrintRealMatrix(stdout,K,T,pilot);
 	// PrintRealMatrix(stdout,size,size,im_pilot);
 }
 
@@ -302,7 +303,7 @@ void init(double sn)
 	
 	//通信路h初期化
 	init_h();
-	
+
 	//pilot信号の初期化　pilotの場合...0 他...1
 	init_pilot();
 
@@ -320,6 +321,11 @@ void init(double sn)
 	GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
 	gsl_matrix_complex_scale(y,tmp1);
 	gsl_matrix_complex_add(y,w);
+
+	// PrintMatrix(stdout,N,K,h);
+	// PrintMatrix(stdout,K,T,x);
+	// PrintMatrix(stdout,N,T,w);
+	// PrintMatrix(stdout,N,T,y);
 
 	init_x_h();
 	// init xi

@@ -5,6 +5,7 @@
 #include "../include/matrix.c"
 #include "../include/random_number.c"
 #include "../include/blas.c"
+#include "../include/complex.c"
 #include "Hadamard.c"
 #include "../include/interleaver.c"
 #include "init_functions.c"
@@ -450,10 +451,10 @@ void culc_x_b()
                 sec1 = gsl_complex_mul_real(tmp1,coef1);
                 // printf("%f\n",coef2*tmp2);
                 tmp2 = 1 - coef2*tmp2;
-                if(tmp2 < 0){
-                    tmp2=0;
-                    printf("exist -\n");
-                }
+                // if(tmp2 < 0){
+                //     printf("exist - sec2 = %f\n",tmp2);
+                //     tmp2=0.0;
+                // }
                 sec2 = gsl_complex_mul_real(gsl_matrix_complex_get(x_h,k,t),tmp2);
 
                 gsl_matrix_complex_set(x_b,k,t,gsl_complex_add(sec1,sec2));
@@ -494,10 +495,12 @@ void culc_x_h()
         {
             if(gsl_matrix_get(pilot,k,t) == 0)
             {
-                tmp.dat[0] = fk(GSL_REAL(gsl_matrix_complex_get(x_b,k,t))
+                tmp.dat[0] = (1.0 - a)*GSL_REAL(gsl_matrix_complex_get(x_h,k,t))
+                            +a*fk(GSL_REAL(gsl_matrix_complex_get(x_b,k,t))
                                 ,gsl_matrix_get(xi_b,k,t)
                                 );
-                tmp.dat[1] = fk(GSL_IMAG(gsl_matrix_complex_get(x_b,k,t))
+                tmp.dat[1] = (1.0 - a)*GSL_IMAG(gsl_matrix_complex_get(x_h,k,t))
+                            +a*fk(GSL_IMAG(gsl_matrix_complex_get(x_b,k,t))
                                 ,gsl_matrix_get(xi_b,k,t)
                                 );
                 gsl_matrix_complex_set(x_h,k,t,tmp);
@@ -581,7 +584,7 @@ int main(int argc, char *argv[])
 
 
     //乱数初期化
-    RandomNumberInitialization(2);
+    RandomNumberInitialization(0);
    
     N0 = Pk/atof(argv[1]);
     sprintf(output_path,"./data/%s/",argv[2]);
@@ -625,16 +628,16 @@ int main(int argc, char *argv[])
         int count_all = 0;
         Repeat_flg = 0;
 
-
         for (i = 0; i < BIG_LOOP; ++i)
         {
+            printf("i = %d\n",i );
 
             //通信路推定
             for (j = 0; j < H_LOOP; ++j)
             {
                 
                 channel_estimation(fp_x);
-                // fprintf(fp_mse_h, "%d %e\n",count_h,culc_complex_mse(N,K,h,h_h));
+                // fprintf(stdout, "%d %e\n",count_h,culc_complex_mse(N,K,h,h_h));
                 mse_h_n[count_h] += culc_complex_mse(N,K,h,h_h)/(double)ENSEMBLE;
                 ++count_h;
                 abs2_matrix(h_h,h_h_abs2,N,K);
@@ -642,6 +645,9 @@ int main(int argc, char *argv[])
                 // I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
                 // zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
                 ++count_all;
+                // PrintMatrix(stdout,N,K,h_h);
+                // PrintMatrix(stdout,N,K,h);
+
             }
             // PrintMatrix(fp_x,N,K,h_h);
             Repeat_flg = 1;
@@ -649,7 +655,6 @@ int main(int argc, char *argv[])
             gsl_matrix_complex_set_zero(z);
             gsl_matrix_complex_set_zero(I_b);
             gsl_matrix_set_zero(zeta);
-
 
             //データ推定
             for (j = 0; j < X_LOOP; ++j)
@@ -663,7 +668,9 @@ int main(int argc, char *argv[])
                 // I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
                 // zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
                 ++count_all;
-                // PrintRealMatrix(stdout,K,T,xi);
+                // printf("data %d\n",i);
+                // PrintMatrix(stdout,K,T,x);
+                // PrintMatrix(stdout,K,T,x_h);
                 
             }
             

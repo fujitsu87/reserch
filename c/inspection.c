@@ -15,6 +15,23 @@ double culc_complex_mse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * 
 	ans = ans/num;
 	return ans;
 }
+//AとBの平均2乗誤差を出力
+double culc_complex_mse_matrix(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * B)
+{
+	int num = n*m;
+	int i,j;
+	double ans = 0;
+	for (i = 0; i < n; ++i)
+	{
+		for (j = 0; j < m; ++j)
+		{
+			printf(" %g ", gsl_complex_abs2(gsl_complex_sub(gsl_matrix_complex_get(A,i,j),gsl_matrix_complex_get(B,i,j))));
+		}
+		printf("\n");
+	}
+	ans = ans/num;
+	return ans;
+}
 
 double culc_bit_error_rate(FILE* fp_bit_err)
 {
@@ -30,18 +47,86 @@ double culc_bit_error_rate(FILE* fp_bit_err)
 			//pilot信号でない場合
 			if(gsl_matrix_get(pilot,k,t) == 0)
 			{
-				//ビットを間違えた場合
-				if(gsl_matrix_complex_get(x_h,k,t).dat[0]*gsl_matrix_complex_get(x,k,t).dat[0] < 0 )
+				double re = gsl_matrix_complex_get(x_h,k,t).dat[0];
+				double im = gsl_matrix_complex_get(x_h,k,t).dat[1];
+
+				//ゼロ符号の場合 y < -x + a_k
+				if( (fabs(re)+fabs(im)) < a_k)
 				{
-					++count;
+					//本当はゼロではないとき
+					if (gsl_matrix_complex_get(x,k,t).dat[0] != 0.0)
+					{
+						count = count +2;
+					}
 				}
-				if(gsl_matrix_complex_get(x_h,k,t).dat[1]*gsl_matrix_complex_get(x,k,t).dat[1] < 0 )
+				else{
+					//本当はゼロ符号のとき
+					if(gsl_matrix_complex_get(x,k,t).dat[0] == 0.0)
+					{
+						count = count +2;
+					}
+					else
+					{ 
+						if(re*gsl_matrix_complex_get(x,k,t).dat[0] < 0 )
+						{
+							++count;
+						}
+						if(im*gsl_matrix_complex_get(x,k,t).dat[1] < 0 )
+						{
+							++count;
+						}
+						if(isnan(im*gsl_matrix_complex_get(x,k,t).dat[1])){
+							fprintf(fp_bit_err,"exist nan\n");
+							exit(0);
+						}
+					}
+				}
+				num = num + 2;
+			}
+		}
+	}
+	// PrintMatrix(stdout,K,T,x_h);
+	// PrintMatrix(stdout,K,T,x);
+	ans = (double)count/(double)num;
+	return ans;
+}
+
+/*
+double culc_bit_error_rate(FILE* fp_bit_err)
+{
+	int k,t;
+	double ans = 0;
+
+	int count = 0;
+	int num = 0;
+	for (k = 0; k < K; ++k)
+	{
+		for (t = 0; t < T; ++t)
+		{	
+			//pilot信号でない場合
+			if(gsl_matrix_get(pilot,k,t) == 0)
+			{
+				double re = gsl_matrix_complex_get(x_h,k,t).dat[0];
+				double im = gsl_matrix_complex_get(x_h,k,t).dat[1];
+				//本当はゼロ符号のとき
+				if(gsl_matrix_complex_get(x,k,t).dat[0] == 0.0)
 				{
-					++count;
+					count = count +2;
 				}
-				if(isnan(gsl_matrix_complex_get(x_h,k,t).dat[1]*gsl_matrix_complex_get(x,k,t).dat[1])){
-					fprintf(fp_bit_err,"exist nan\n");
-					exit(0);
+				else
+				{ 
+					if(re*gsl_matrix_complex_get(x,k,t).dat[0] < 0 )
+					{
+						++count;
+					}
+					if(im*gsl_matrix_complex_get(x,k,t).dat[1] < 0 )
+					{
+						++count;
+					}
+					if(isnan(im*gsl_matrix_complex_get(x,k,t).dat[1])){
+						fprintf(fp_bit_err,"exist nan\n");
+						exit(0);
+					}
 				}
 				num = num + 2;
 			}
@@ -50,7 +135,7 @@ double culc_bit_error_rate(FILE* fp_bit_err)
 	ans = (double)count/(double)num;
 	return ans;
 }
-
+*/
 double culc_abs2_all_element(int n,int m,gsl_matrix_complex * A)
 {
 	int num = n*m;
