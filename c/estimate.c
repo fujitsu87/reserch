@@ -10,7 +10,8 @@
 #include "../include/interleaver.c"
 #include "init_functions.c"
 #include "inspection.c"
-
+#include <sys/stat.h>
+#include <sys/types.h>
 
 //----------------絶対値の2乗の行列を計算-------------------------------
 void abs2_matrix(gsl_matrix_complex *x, gsl_matrix *y,int s1,int s2)
@@ -124,15 +125,24 @@ void culc_z()
     // printf("%f\n",culc_abs2_all_element(N,T,z));
 }
 //---------------fk関数---------------------------------------------
-double fk(double u,double v)
+double fk(double u,double v,int k,int t)
 {
     double ans;
     double e1,e2,e3,t1,t2;
-    e1 = exp(2*a_k*u/v);
-    e2 = exp(-2*a_k*u/v);
-    e3 = exp(a_k*a_k/v);
+    if(k < K/DK){
+        e1 = exp(2*a_k*u/v);
+        e2 = exp(-2*a_k*u/v);
+        e3 = exp(a_k*a_k/v);
 
-    t1 = a_k * (e1 - e2);
+        t1 = a_k * (e1 - e2);
+    }
+    else{
+        e1 = exp(2*1/sqrt(2)*a_k*u/v);
+        e2 = exp(-2*1/sqrt(2)*a_k*u/v);
+        e3 = exp(0.5*a_k*a_k/v);
+
+        t1 = 1/sqrt(2)*a_k * (e1 - e2);
+    }
     t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
 
     ans = t1/t2;
@@ -141,15 +151,22 @@ double fk(double u,double v)
 }
 
 //------------------A関数-------------------------------------------
-double diff_fk(double u,double v)
+double diff_fk(double u,double v,int k,int t)
 {
     double ans;
     double e1,e2,e3,t1,t2;
-    e1 = exp(2*a_k*u/v);
-    e2 = exp(-2*a_k*u/v);
-    e3 = exp(a_k*a_k/v);
-
-    t1 = 2 * a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
+    if(k < K/DK){
+        e1 = exp(2*a_k*u/v);
+        e2 = exp(-2*a_k*u/v);
+        e3 = exp(a_k*a_k/v);
+        t1 = 2 * a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
+    }
+    else{
+        e1 = exp(2*1/sqrt(2)*a_k*u/v);
+        e2 = exp(-2*1/sqrt(2)*a_k*u/v);
+        e3 = exp(0.5*a_k*a_k/v);
+        t1 = 2 *0.5* a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
+    }
     t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
 
     t2 = t2 * t2;
@@ -173,14 +190,12 @@ gsl_complex A(gsl_complex arg,int k,int t)
         double v = gsl_matrix_get(xi_b,k,t);
         ans.dat[0] = GSL_REAL(arg) 
                     * diff_fk(GSL_REAL(gsl_matrix_complex_get(x_b,k,t))
-                        ,v
+                        ,v,k,t
                     );
         ans.dat[1] = GSL_IMAG(arg) 
                     * diff_fk(GSL_IMAG(gsl_matrix_complex_get(x_b,k,t))
-                        ,v
+                        ,v,k,t
                     );
-
-
         return ans;
     }
 }
@@ -474,7 +489,13 @@ void culc_xi()
         for (t = 0; t < T; ++t)
         {
             double tmp;
-            tmp = Pk - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
+            if(k < K/DK){
+                tmp = Pk - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
+            }
+            else{
+                tmp = 0.5*Pk - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
+            }
+
             if(tmp < 0.0)
             {
                 tmp=0.0;
@@ -497,11 +518,11 @@ void culc_x_h()
             {
                 tmp.dat[0] = (1.0 - a)*GSL_REAL(gsl_matrix_complex_get(x_h,k,t))
                             +a*fk(GSL_REAL(gsl_matrix_complex_get(x_b,k,t))
-                                ,gsl_matrix_get(xi_b,k,t)
+                                ,gsl_matrix_get(xi_b,k,t),k,t
                                 );
                 tmp.dat[1] = (1.0 - a)*GSL_IMAG(gsl_matrix_complex_get(x_h,k,t))
                             +a*fk(GSL_IMAG(gsl_matrix_complex_get(x_b,k,t))
-                                ,gsl_matrix_get(xi_b,k,t)
+                                ,gsl_matrix_get(xi_b,k,t),k,t
                                 );
                 gsl_matrix_complex_set(x_h,k,t,tmp);
             }
@@ -588,7 +609,7 @@ int main(int argc, char *argv[])
    
     N0 = Pk/atof(argv[1]);
     sprintf(output_path,"./data/%s/",argv[2]);
-    mkdir(output_path);
+    mkdir(output_path,0777);
     sprintf(mse_h,"./data/%s/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
     sprintf(bit_err,"./data/%s/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
     sprintf(etc,"./data/%s/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
