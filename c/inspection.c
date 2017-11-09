@@ -1,5 +1,5 @@
 
-//AとBの平均2乗誤差を出力
+//AとBの平均2乗誤差(MSE)を出力
 double culc_complex_mse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * B)
 {
 	int num = n*m;
@@ -15,6 +15,24 @@ double culc_complex_mse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * 
 	ans = ans/num;
 	return ans;
 }
+
+//AとBの平均2乗誤差(MSE)を出力 自セル
+double culc_complex_mse_etc(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * B,int jstart)
+{
+	int num = n*(m-jstart);
+	int i,j;
+	double ans = 0;
+	for (i = 0; i < n; ++i)
+	{
+		for (j = jstart; j < m; ++j)
+		{
+			ans += gsl_complex_abs2(gsl_complex_sub(gsl_matrix_complex_get(A,i,j),gsl_matrix_complex_get(B,i,j)));
+		}
+	}
+	ans = ans/num;
+	return ans;
+}
+
 //AとBの平均2乗誤差を出力
 double culc_complex_mse_matrix(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * B)
 {
@@ -33,14 +51,14 @@ double culc_complex_mse_matrix(int n,int m,gsl_matrix_complex * A,gsl_matrix_com
 	return ans;
 }
 
-double culc_bit_error_rate(FILE* fp_bit_err)
+double culc_bit_error_rate(FILE* fp_bit_err,int kstart,int kend)
 {
 	int k,t;
 	double ans = 0;
 
 	int count = 0;
 	int num = 0;
-	for (k = 0; k < K; ++k)
+	for (k = kstart; k < kend; ++k)
 	{
 		for (t = 0; t < T; ++t)
 		{	

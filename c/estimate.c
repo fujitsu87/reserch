@@ -2,6 +2,7 @@
 #include <math.h>
 #include <time.h>
 #include <stdlib.h>
+#include <string.h>
 #include "../include/matrix.c"
 #include "../include/random_number.c"
 #include "../include/blas.c"
@@ -137,11 +138,11 @@ double fk(double u,double v,int k,int t)
         t1 = a_k * (e1 - e2);
     }
     else{
-        e1 = exp(2*1/sqrt(2)*a_k*u/v);
-        e2 = exp(-2*1/sqrt(2)*a_k*u/v);
+        e1 = exp(2*sqrt(cell_diff)*a_k*u/v);
+        e2 = exp(-2*sqrt(cell_diff)*a_k*u/v);
         e3 = exp(0.5*a_k*a_k/v);
 
-        t1 = 1/sqrt(2)*a_k * (e1 - e2);
+        t1 = sqrt(cell_diff)*a_k * (e1 - e2);
     }
     t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
 
@@ -162,10 +163,10 @@ double diff_fk(double u,double v,int k,int t)
         t1 = 2 * a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
     }
     else{
-        e1 = exp(2*1/sqrt(2)*a_k*u/v);
-        e2 = exp(-2*1/sqrt(2)*a_k*u/v);
-        e3 = exp(0.5*a_k*a_k/v);
-        t1 = 2 *0.5* a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
+        e1 = exp(2*sqrt(cell_diff)*a_k*u/v);
+        e2 = exp(-2*sqrt(cell_diff)*a_k*u/v);
+        e3 = exp(cell_diff*a_k*a_k/v);
+        t1 = 2 *cell_diff* a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
     }
     t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
 
@@ -575,13 +576,17 @@ int main(int argc, char *argv[])
         return 0;
     }
 
-    FILE *fp_mse_h;
-    FILE *fp_bit_err;
+    FILE *fp_mse_h,*fp_mse_h_my,*fp_mse_h_other;
+    FILE *fp_bit_err,*fp_bit_err_my,*fp_bit_err_other;
     FILE *fp_x;
     FILE *fp_sn_bit_err;
 
     char mse_h[100];
+    char mse_h_my[100];
+    char mse_h_other[100];
     char bit_err[100];
+    char bit_err_my[100];
+    char bit_err_other[100];
     char etc[100];
     char sn_bit_err[100];
     char output_path[100];
@@ -589,13 +594,23 @@ int main(int argc, char *argv[])
     int i,j,l,k;
 
 
-    //通信路推定
+    //mse
+    //他セル　自セル含む
     double  *mse_h_n = (double *)malloc( sizeof(double) *BIG_LOOP*H_LOOP );
     double  *mse_h_en = (double *)malloc( sizeof(double) *ENSEMBLE);
-
+    //自セル
+    double  *mse_h_n_my = (double *)malloc( sizeof(double) *BIG_LOOP*H_LOOP );
+    //他セル
+    double  *mse_h_n_other = (double *)malloc( sizeof(double) *BIG_LOOP*H_LOOP );
+    
     //BER
+    //他セル　自セル含む
     double  *bit_err_n = (double *)malloc( sizeof(double) *BIG_LOOP*X_LOOP );
     double  *bit_err_en = (double *)malloc( sizeof(double) *ENSEMBLE );
+    //自セル
+    double  *bit_err_n_my = (double *)malloc( sizeof(double) *BIG_LOOP*X_LOOP );
+    //他セル
+    double  *bit_err_n_other = (double *)malloc( sizeof(double) *BIG_LOOP*X_LOOP );
 
     //I_b
     double  *I_b_n = (double *)malloc( sizeof(double) *BIG_LOOP*H_LOOP*X_LOOP );
@@ -611,7 +626,11 @@ int main(int argc, char *argv[])
     sprintf(output_path,"./data/%s/",argv[2]);
     mkdir(output_path,0777);
     sprintf(mse_h,"./data/%s/mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
+    sprintf(mse_h_my,"./data/%s/mse_h_my_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
+    sprintf(mse_h_other,"./data/%s/mse_h_other_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
     sprintf(bit_err,"./data/%s/bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
+    sprintf(bit_err_my,"./data/%s/bit_err_my_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);    
+    sprintf(bit_err_other,"./data/%s/bit_err_other_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
     sprintf(etc,"./data/%s/etc_N%d_K%d_T%d_Tp%d_SN%.f.dat",argv[2],N,K,T,Tp,Pk/N0);
     sprintf(sn_bit_err,"./data/%s/sn_bit_err_N%d_K%d_T%d_Tp%d.dat",argv[2],N,K,T,Tp);
     
@@ -619,8 +638,24 @@ int main(int argc, char *argv[])
         printf("can not open%s\n",mse_h);
         return 1;
     }
+    if ((fp_mse_h_my = fopen(mse_h_my, "w")) == NULL) {
+        printf("can not open%s\n",mse_h_my);
+        return 1;
+    }
+    if ((fp_mse_h_other = fopen(mse_h_other, "w")) == NULL) {
+        printf("can not open%s\n",mse_h_other);
+        return 1;
+    }
     if ((fp_bit_err = fopen(bit_err, "w")) == NULL) {
         printf("can not open %s\n",bit_err);
+        return 1;
+    }
+    if ((fp_bit_err_my = fopen(bit_err_my, "w")) == NULL) {
+        printf("can not open %s\n",bit_err_my);
+        return 1;
+    }
+    if ((fp_bit_err_other = fopen(bit_err_other, "w")) == NULL) {
+        printf("can not open %s\n",bit_err_other);
         return 1;
     }
     if ((fp_x = fopen(etc, "w")) == NULL) {
@@ -631,10 +666,6 @@ int main(int argc, char *argv[])
         printf("can not open %s\n",sn_bit_err);
         return 1;
     }
-
-
-
-   
 
     clock_t start,end;
     start = clock();
@@ -660,6 +691,8 @@ int main(int argc, char *argv[])
                 channel_estimation(fp_x);
                 // fprintf(stdout, "%d %e\n",count_h,culc_complex_mse(N,K,h,h_h));
                 mse_h_n[count_h] += culc_complex_mse(N,K,h,h_h)/(double)ENSEMBLE;
+                mse_h_n_my[count_h] += culc_complex_mse_etc(N,K/DK,h,h_h,0)/(double)ENSEMBLE;
+                mse_h_n_other[count_h] += culc_complex_mse_etc(N,K,h,h_h,K/DK)/(double)ENSEMBLE;
                 ++count_h;
                 abs2_matrix(h_h,h_h_abs2,N,K);
 
@@ -681,8 +714,10 @@ int main(int argc, char *argv[])
             for (j = 0; j < X_LOOP; ++j)
             {
                 data_estimation(fp_x);
-                // fprintf(fp_bit_err, "%d %lf\n",count_x,culc_bit_error_rate());
-                bit_err_n[count_x] += culc_bit_error_rate(fp_bit_err)/(double)ENSEMBLE;
+
+                bit_err_n[count_x] += culc_bit_error_rate(fp_bit_err,0,K)/(double)ENSEMBLE;
+                bit_err_n_my[count_x] += culc_bit_error_rate(fp_bit_err,0,K/DK)/(double)ENSEMBLE;
+                bit_err_n_other[count_x] += culc_bit_error_rate(fp_bit_err,K/DK,K)/(double)ENSEMBLE;
                 ++count_x;
                 abs2_matrix(x_h,x_h_abs2,K,T);
 
@@ -700,7 +735,7 @@ int main(int argc, char *argv[])
             gsl_matrix_set_zero(zeta);
         }
         mse_h_en[k] = culc_complex_mse(N,K,h,h_h);
-        bit_err_en[k] = culc_bit_error_rate(fp_bit_err);
+        bit_err_en[k] = culc_bit_error_rate(fp_bit_err,0,K);
 
         finish();
     }
@@ -711,10 +746,14 @@ int main(int argc, char *argv[])
     for (i = 0; i < BIG_LOOP*H_LOOP; ++i)
     {
         fprintf(fp_mse_h,"%d %lf\n",i+1,mse_h_n[i]);
+        fprintf(fp_mse_h_my,"%d %lf\n",i+1,mse_h_n_my[i]);
+        fprintf(fp_mse_h_other,"%d %lf\n",i+1,mse_h_n_other[i]);
     }
-        for (i = 0; i < BIG_LOOP*X_LOOP; ++i)
+    for (i = 0; i < BIG_LOOP*X_LOOP; ++i)
     {
         fprintf(fp_bit_err, "%d %lf\n",i+1,bit_err_n[i]);
+        fprintf(fp_bit_err_my, "%d %lf\n",i+1,bit_err_n_my[i]);
+        fprintf(fp_bit_err_other, "%d %lf\n",i+1,bit_err_n_other[i]);
     }
 
     //MSEとBER分散と標準偏差を求める
@@ -726,11 +765,17 @@ int main(int argc, char *argv[])
     fprintf(fp_sn_bit_err,"%f %f\n",10*log10(Pk/N0),bit_err_n[BIG_LOOP*X_LOOP-1]);
 
     fclose(fp_mse_h);
+    fclose(fp_mse_h_my);
+    fclose(fp_mse_h_other);
     fclose(fp_bit_err);
     fclose(fp_x);
     fclose(fp_sn_bit_err);
     free(mse_h_n);
     free(bit_err_n); 
+    free(mse_h_n_my);
+    free(bit_err_n_my); 
+    free(mse_h_n_other);
+    free(bit_err_n_other); 
     free(mse_h_en);
     free(bit_err_en); 
     return 0;

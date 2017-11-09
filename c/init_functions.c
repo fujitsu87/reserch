@@ -1,15 +1,15 @@
 //基地局のアンテナの数
-#define N 256
+#define N 128
 //ユーザ数
-#define K 48
+#define K 64
 //離散時間ステップ数
-#define T 384
+#define T 1024
 //pilot信号時間長さ(必ずTP>Kにする)
 #define Tp 128
 //隣接基地局数
-#define DK 3
+#define DK 2
 //アンサンブル平均回数
-#define ENSEMBLE 10
+#define ENSEMBLE 2
 
 //反復回数 おおまわり
 #define BIG_LOOP 3
@@ -33,7 +33,10 @@ double a_k;
 int Repeat_flg = 1;
 
 //ダンピング係数
-double a = 0.10;
+double a = 0.5;
+
+//セル間電力差
+double cell_diff = 0.5;
 
 gsl_matrix_complex* x;
 gsl_matrix_complex* h;
@@ -103,20 +106,20 @@ void init_pilot()
 				}
 			}
 			else {
-				// //左下のpilot信号
-				// if(k >= K/DK && t < Tp)
-				// {
-				// 	gsl_matrix_set(pilot,k,t,1);
-				// }
-				// //右上のpilot信号
-				// else if(k < K/DK && t >= T-Tp)
-				// {
-				// 	gsl_matrix_set(pilot,k,t,1);
-				// }
-				// else{
-				// 	gsl_matrix_set(pilot,k,t,0);
-				// }
-
+				//左下のpilot信号
+				if(k >= K/DK && t < Tp)
+				{
+					gsl_matrix_set(pilot,k,t,1);
+				}
+				//右上のpilot信号
+				else if(k < K/DK && t >= T-Tp)
+				{
+					gsl_matrix_set(pilot,k,t,1);
+				}
+				else{
+					gsl_matrix_set(pilot,k,t,0);
+				}
+/* 基地局が3つの場合
 				//左下のpilot信号
 				if(k >= 2*K/DK && t < Tp)
 				{
@@ -135,6 +138,7 @@ void init_pilot()
 				else{
 					gsl_matrix_set(pilot,k,t,0);
 				}
+*/
 			}
 			
 		}
@@ -159,7 +163,7 @@ int decision_hadamard_size()
 
 void init_x()
 {
-	int k,t;
+	int k,t,i;
 	int n = decision_hadamard_size();
 	int size = (int)pow(2,n);
 	int *P = (int *)malloc(sizeof(int)*size);
@@ -175,12 +179,25 @@ void init_x()
 	Permutation(size,P);
 	GslMatrixRealInterleaver(size,size,orthogonal,im_pilot,P);
 	free(orthogonal);
+	free(P);
+
+	//for data 
+	int data_size = T-Tp;
+	double *data = (double *)malloc(sizeof(double)*data_size);
+	double *data_tmp = (double *)malloc(sizeof(double)*data_size);
+	for(i=0;i<data_size;i++)
+	{
+		if(i < data_size*rho_k) data[i] = 1.0;
+		else data[i] = 0.0;
+	}
+	P = (int *)malloc(sizeof(int)*data_size);
 
 	for (k = 0; k < K; ++k)
 	{
+		Permutation(data_size,P);
+		RealInterleaver(data_size,data,data_tmp,P);
 		for (t = 0; t < T; ++t)
 		{
-
 			double tmp[2] = {-1.0,1.0};
 			gsl_complex z;
 
@@ -195,7 +212,7 @@ void init_x()
 				}
 	
 			}
-			
+/*			
 			//右上のpilot信号
 			else if(Pilot_flg == 0 && k < K/DK && t >= T-Tp)
 			{
@@ -204,16 +221,16 @@ void init_x()
 			//左下
 			else if(Pilot_flg == 0 && k >= 2*K/DK && t < Tp)
 			{
-				GSL_SET_COMPLEX(&z,1/sqrt(2)*p_p*gsl_matrix_get(re_pilot,k-K/DK,t),1/sqrt(2)*p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
+				GSL_SET_COMPLEX(&z,sqrt(cell_diff)*p_p*gsl_matrix_get(re_pilot,k-K/DK,t),sqrt(cell_diff)*p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
 			}
 			//下から二段目のpilot信号
 			else if(Pilot_flg == 0 && k >= K/DK && k < 2*K/DK && t >= Tp && t < 2*Tp)
 			{
-				GSL_SET_COMPLEX(&z,1/sqrt(2)*p_p*gsl_matrix_get(re_pilot,k-K/DK,t-Tp),1/sqrt(2)*p_p*gsl_matrix_get(im_pilot,k-K/DK,t-Tp));
+				GSL_SET_COMPLEX(&z,sqrt(cell_diff)*p_p*gsl_matrix_get(re_pilot,k-K/DK,t-Tp),sqrt(cell_diff)*p_p*gsl_matrix_get(im_pilot,k-K/DK,t-Tp));
 			}
-
-/* DK=2のとき
-			//右上のpilot信号　半分パイロットの場合
+*/
+// DK=2のとき
+			//右上のpilot信号
 			else if(Pilot_flg == 0 && k < K/DK && t >= T-Tp)
 			{
 				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t-(T-Tp)),p_p*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
@@ -224,8 +241,10 @@ void init_x()
 			else if(Pilot_flg == 0 && k >= K/DK && t < Tp)
 			{
 				z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
+				z.dat[0] = sqrt(cell_diff) * z.dat[0];
+				z.dat[1] = sqrt(cell_diff) * z.dat[1];
 			}
-*/
+
 			//下のpilot信号 contaminationの場合
 			else if(Pilot_flg == 2 && k >= K/DK)
 			{
@@ -233,21 +252,37 @@ void init_x()
 			}
 			else 
 			{
+/*
 				if(rho_k > gsl_rng_uniform(RAN)){
 					if(k < K/DK){
 						GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
 					}
 					else{
-						GSL_SET_COMPLEX(&z,1/sqrt(2)*a_k*tmp[UniformBit()],1/sqrt(2)*a_k*tmp[UniformBit()]);
+						GSL_SET_COMPLEX(&z,sqrt(cell_diff)*a_k*tmp[UniformBit()],sqrt(cell_diff)*a_k*tmp[UniformBit()]);
 					}
 				}
 				else GSL_SET_COMPLEX(&z,0,0);
+*/
+				//permutationする
+				if(k < K/DK){
+					GSL_SET_COMPLEX(&z,
+						a_k*data_tmp[t]*tmp[UniformBit()],
+						a_k*data_tmp[t]*tmp[UniformBit()]);
+				}
+				else{
+					GSL_SET_COMPLEX(&z,
+						sqrt(cell_diff)*a_k*data_tmp[t-Tp]*tmp[UniformBit()],
+						sqrt(cell_diff)*a_k*data_tmp[t-Tp]*tmp[UniformBit()]);
+				}
 			}
+
 			gsl_matrix_complex_set(x,k,t,z);
 		}
 	}
 	free(re_pilot);
 	free(im_pilot);
+	free(P);
+	free(data);
 	// PrintMatrix(stdout,K,T,x);
 	// PrintRealMatrix(stdout,size,size,im_pilot);
 }
