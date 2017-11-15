@@ -50,6 +50,7 @@ void finish()
     zeta = GSLRealMatrixFree(zeta);
 
     pilot =  GSLRealMatrixFree(pilot);
+    free(user_p);
 }
 
 //-----------zetaの計算-----------------------------------
@@ -91,6 +92,7 @@ void culc_z()
 
     // y - I_b
     gsl_matrix_complex_sub(tmp1,I_b);
+
     //N0 + zeta
     gsl_matrix* tmp2;
     tmp2 = gsl_matrix_calloc(N,T);
@@ -104,22 +106,20 @@ void culc_z()
             gsl_matrix_set(tmp2,n,t,noise);
         }
     }
-    
     gsl_matrix_add(tmp2,zeta);
-    
+
     //z = (y - I_b)/(N0 + zeta)
     for (n = 0; n < N; ++n)
     {
         for (t = 0; t < T; ++t)
         {
-            gsl_complex tmp3 = gsl_complex_div_real(gsl_matrix_complex_get(tmp1,n,t)
-                                            ,gsl_matrix_get(tmp2,n,t));
+            gsl_complex tmp3 = gsl_complex_div_real(
+                                gsl_matrix_complex_get(tmp1,n,t)
+                                            ,gsl_matrix_get(tmp2,n,t)
+                                );
             gsl_matrix_complex_set(z,n,t,tmp3);
         }
     }
-
-
-    
     tmp1 = GSLMatrixFree(tmp1);
     tmp2 = GSLRealMatrixFree(tmp2);
 
@@ -130,20 +130,20 @@ double fk(double u,double v,int k,int t)
 {
     double ans;
     double e1,e2,e3,t1,t2;
-    if(k < K/DK){
+    // if(k < K/DK){
         e1 = exp(2*a_k*u/v);
         e2 = exp(-2*a_k*u/v);
         e3 = exp(a_k*a_k/v);
 
         t1 = a_k * (e1 - e2);
-    }
-    else{
-        e1 = exp(2*sqrt(cell_diff)*a_k*u/v);
-        e2 = exp(-2*sqrt(cell_diff)*a_k*u/v);
-        e3 = exp(0.5*a_k*a_k/v);
+    //}
+    // else{
+    //     e1 = exp(2*sqrt(cell_diff)*a_k*u/v);
+    //     e2 = exp(-2*sqrt(cell_diff)*a_k*u/v);
+    //     e3 = exp(0.5*a_k*a_k/v);
 
-        t1 = sqrt(cell_diff)*a_k * (e1 - e2);
-    }
+    //     t1 = sqrt(cell_diff)*a_k * (e1 - e2);
+    // }
     t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
 
     ans = t1/t2;
@@ -151,23 +151,45 @@ double fk(double u,double v,int k,int t)
     return ans;
 }
 
+//------------------v_k関数-------------------------------------------
+double v_k(gsl_complex u,double v,int k,int t)
+{
+    double ans;
+    double e1,e2,e3,t1,t2,fk_real,fk_imag;
+    double u2;
+    u2 = gsl_complex_abs2(u);
+
+    e1 = exp(a_k*u2/v);
+    e2 = exp((-1)*a_k*u2/v);
+    e3 = exp(a_k*a_k/(2*v));
+
+    t1 = a_k * (e1 - e2);
+    t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
+
+    fk_real = fk(GSL_REAL(u),v,k,t);
+    fk_imag = fk(GSL_IMAG(u),v,k,t);
+
+    ans = t1/t2 - (fk_real*fk_real + fk_imag*fk_imag);
+
+    return ans;
+}
 //------------------A関数-------------------------------------------
 double diff_fk(double u,double v,int k,int t)
 {
     double ans;
     double e1,e2,e3,t1,t2;
-    if(k < K/DK){
+    // if(k < K/DK){
         e1 = exp(2*a_k*u/v);
         e2 = exp(-2*a_k*u/v);
         e3 = exp(a_k*a_k/v);
         t1 = 2 * a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
-    }
-    else{
+    // }
+    /*else{
         e1 = exp(2*sqrt(cell_diff)*a_k*u/v);
         e2 = exp(-2*sqrt(cell_diff)*a_k*u/v);
         e3 = exp(cell_diff*a_k*a_k/v);
         t1 = 2 *cell_diff* a_k* a_k / v * (4 + 2 * (1/rho_k - 1)* e3 *(e1 + e2) );
-    }
+    }*/
     t2 = e1 + e2 + 2 * (1/rho_k - 1) * e3;
 
     t2 = t2 * t2;
@@ -204,18 +226,19 @@ gsl_complex A(gsl_complex arg,int k,int t)
 //----------------I_bの計算--------------------------------
 void culc_I()
 {
+
     int n,t,k;
     gsl_complex tmp;
     gsl_complex tmp2;
     gsl_complex tmp3;
     gsl_complex tmp4;
+    
     abs2_matrix(x_h,x_h_abs2,K,T);
+    abs2_matrix(h_h,h_h_abs2,N,K);
 
     gsl_matrix_complex *h_h_conju;
     h_h_conju = gsl_matrix_complex_calloc(K,N);
     ConjugateTranspose(h_h,h_h_conju);
-
-    // PrintMatrix(stdout,K,N,h_h_conju);
 
     // 1/sqrt(N) h_h * x_h
     AB(h_h,x_h,I_b);
@@ -231,9 +254,11 @@ void culc_I()
             GSL_SET_COMPLEX(&tmp2,0,0);
             for (k = 0; k < K; ++k)
             {
-                GSL_SET_COMPLEX(&tmp3,0,0);
+                a_k = sqrt(user_p[k]/(2*rho_k));
+                // GSL_SET_COMPLEX(&tmp3,0,0);
+               
+               /* 旧ver
                 //xiを取り出す
-                
                 GSL_SET_COMPLEX(&tmp3,gsl_matrix_get(xi_b,k,t),0);
                 //Aktの計算
                 tmp4 = A(
@@ -245,12 +270,16 @@ void culc_I()
                             ,t
                         );
 
-
                 //xi_b * A
                 tmp3 = gsl_complex_mul(tmp3,tmp4);
                 //h_hとかけ合わせる
                 tmp3 = gsl_complex_mul(gsl_matrix_complex_get(h_h,n,k),tmp3);
-
+            */
+                //h_h^2 + xi * znt
+                tmp3 = gsl_complex_mul_real(
+                        gsl_matrix_complex_get(z,n,t)
+                        ,gsl_matrix_get(xi,k,t)*gsl_matrix_get(h_h_abs2,n,k)
+                    );
 
                 //eta * x_h^2 * znt
                 tmp4 = gsl_complex_mul_real(
@@ -261,27 +290,24 @@ void culc_I()
                 tmp2.dat[0] += tmp3.dat[0] + tmp4.dat[0];
                 tmp2.dat[1] += tmp3.dat[1] + tmp4.dat[1];
             }
-
             tmp2.dat[0] = tmp2.dat[0]/(double)N;
             tmp2.dat[1] = tmp2.dat[1]/(double)N;
 
-
+            // printf("n = %d t = %d %f\n",n,t,tmp2.dat[0]);            
             //I_bから引く
             tmp3 = gsl_complex_sub(gsl_matrix_complex_get(I_b,n,t),tmp2);
-
             
             //I_bにset
             gsl_matrix_complex_set(I_b,n,t,tmp3);
 
         }
     }
-
-
     h_h_conju = GSLMatrixFree(h_h_conju);
 }
 //------------------culc_h_h-----------------------------------
 void culc_h_h()
 {
+
     int n,t,k;
     gsl_complex tmp1;
     gsl_complex tmp2;
@@ -293,7 +319,6 @@ void culc_h_h()
     GSL_SET_COMPLEX(&sec2,0,0);
     GSL_SET_COMPLEX(&sec3,0,0);
 
-
     gsl_matrix_complex *x_h_conju;
     x_h_conju = gsl_matrix_complex_calloc(T,K);
     ConjugateTranspose(x_h,x_h_conju);
@@ -302,21 +327,22 @@ void culc_h_h()
     h_h_conju = gsl_matrix_complex_calloc(K,N);
     ConjugateTranspose(h_h,h_h_conju);
 
-
     double n_sqrt = sqrt((double)N);
+    double tmp4,tmp5;
     for (n = 0; n < N; ++n)
     {
         for (k = 0; k < K; ++k)
         {
+            a_k = sqrt(user_p[k]/(2*rho_k));
             GSL_SET_COMPLEX(&sec1,0,0);
             GSL_SET_COMPLEX(&sec2,0,0);
             GSL_SET_COMPLEX(&sec3,0,0);
-
+            tmp4 = 0;
             for (t = 0; t < T; ++t)
             {
                 GSL_SET_COMPLEX(&tmp1,0,0);
                 
-                //h_h * x_h_conju　第1項の計算
+                //z * x_h_conju　第1項の計算
                 
                 tmp1 = gsl_complex_mul(
                             gsl_matrix_complex_get(x_h_conju,t,k)
@@ -324,10 +350,12 @@ void culc_h_h()
                         );
                 sec1.dat[0] += tmp1.dat[0];
                 sec1.dat[1] += tmp1.dat[1];
-                
+            
                 //第3項の計算
                 GSL_SET_COMPLEX(&tmp2,0,0);
+                
                 //Aktの計算
+                /*
                 tmp2 = A(
                             gsl_complex_mul(
                                 gsl_matrix_complex_get(h_h_conju,k,n),
@@ -347,11 +375,14 @@ void culc_h_h()
                         );
                 sec3.dat[0] += tmp2.dat[0];
                 sec3.dat[1] += tmp2.dat[1];
-
+                */
+                tmp4 = tmp4 + gsl_matrix_get(xi,k,t) 
+                        *gsl_complex_abs2(gsl_matrix_complex_get(z,n,t));
+               
             }
             sec1.dat[0] = sec1.dat[0]/n_sqrt;
             sec1.dat[1] = sec1.dat[1]/n_sqrt;
-
+            
             sec1 = gsl_complex_mul_real(sec1,gsl_matrix_get(eta,n,k));
 
             sec2 = gsl_complex_mul_real(
@@ -359,21 +390,23 @@ void culc_h_h()
                     ,(1-gsl_matrix_get(eta,n,k))
                 );
 
-
+            sec3 = gsl_complex_mul_real(
+                            gsl_matrix_complex_get(h_h,n,k)
+                            ,tmp4
+                        );
             sec3.dat[0] = sec3.dat[0]/(double)N;
             sec3.dat[1] = sec3.dat[1]/(double)N;
-            sec3 = gsl_complex_mul_real(sec3,-gsl_matrix_get(eta,n,k));
+            sec3 = gsl_complex_mul_real(sec3,(-1)*gsl_matrix_get(eta,n,k));
 
             GSL_SET_COMPLEX(&tmp3,0,0);
             tmp3 = gsl_complex_add(sec1,sec2);
             tmp3 = gsl_complex_add(tmp3,sec3);
+
             gsl_matrix_complex_set(h_h,n,k,tmp3);
         }
     }
-
     x_h_conju = GSLMatrixFree(x_h_conju);
     h_h_conju = GSLMatrixFree(h_h_conju);
-
 
 }
 //------------------culc_eta------------------------------------
@@ -423,8 +456,6 @@ void culc_xi_b()
         }
     }
 
-    // printf("%f\n",culc_abs2_all_element_real(K,T,xi_b) );
-
 }
 //------------------culc_x_b------------------------------------
 void culc_x_b()
@@ -458,7 +489,6 @@ void culc_x_b()
                     tmp4 = gsl_matrix_complex_get(z,n,t);
                     tmp1 = gsl_complex_add(gsl_complex_mul(tmp3,tmp4),tmp1);
 
-
                     tmp5 = gsl_matrix_get(eta,n,k);
                     tmp6 = gsl_complex_abs2(gsl_matrix_complex_get(z,n,t));
                     tmp2 += tmp5*tmp6;
@@ -483,25 +513,27 @@ void culc_x_b()
 void culc_xi()
 {
     int k,t;
-
-
     for (k = 0; k < K; ++k)
     {
+        a_k = sqrt(user_p[k]/(2*rho_k));
         for (t = 0; t < T; ++t)
         {
             double tmp;
+            //旧ver 2017.11.14
             if(k < K/DK){
-                tmp = Pk - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
+                tmp = user_p[k] - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
             }
             else{
-                tmp = 0.5*Pk - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
+                tmp = user_p[k] - gsl_complex_abs2(gsl_matrix_complex_get(x_h,k,t));
             }
+
+            // tmp = v_k(gsl_matrix_complex_get(x_h,k,t)
+            //         ,gsl_matrix_get(xi_b,k,t),k,t);
 
             if(tmp < 0.0)
             {
                 tmp=0.0;
             }
-            // printf("%f %f\n",gsl_matrix_complex_get(x_h,k,t).dat[0],Pk);
             gsl_matrix_set(xi,k,t,tmp);
         }
     }
@@ -513,6 +545,7 @@ void culc_x_h()
     gsl_complex tmp;
     for (k = 0; k < K; ++k)
     {
+        a_k = sqrt(user_p[k]/(2*rho_k));
         for (t = 0; t < T; ++t)
         {
             if(gsl_matrix_get(pilot,k,t) == 0)
@@ -536,18 +569,18 @@ void culc_x_h()
 //------------------通信路推定器----------------------------------
 void channel_estimation(FILE *fp_x)
 {
+
     culc_zata();
     culc_I();
     culc_z();
 
-
     culc_eta();
     culc_h_h();
-    
-    
+
     // gsl_matrix_set_zero(eta);
     // gsl_matrix_complex_memcpy(h_h,h);
  
+    // PrintMatrix(stdout,N,K,h_h);
 }
 
 //------------------データ推定器----------------------------------
@@ -556,12 +589,13 @@ void data_estimation(FILE *fp_x)
     culc_zata();
     culc_I();
     culc_z();
-
-
+   
     culc_xi_b();
     culc_x_b();
-    culc_xi();
+
     culc_x_h();
+    culc_xi();
+
 
     // output_estimatedata(fp_x);
 
@@ -682,12 +716,14 @@ int main(int argc, char *argv[])
 
         for (i = 0; i < BIG_LOOP; ++i)
         {
-            printf("i = %d\n",i );
+            printf("i = %d H\n",i );
 
             //通信路推定
+            init_eta()
             for (j = 0; j < H_LOOP; ++j)
             {
-                
+                if(j==0)gsl_matrix_set_zero(xi);
+                // gsl_matrix_set_zero(eta);
                 channel_estimation(fp_x);
                 // fprintf(stdout, "%d %e\n",count_h,culc_complex_mse(N,K,h,h_h));
                 mse_h_n[count_h] += culc_complex_mse(N,K,h,h_h)/(double)ENSEMBLE;
@@ -696,6 +732,7 @@ int main(int argc, char *argv[])
                 ++count_h;
                 abs2_matrix(h_h,h_h_abs2,N,K);
 
+            
                 // I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
                 // zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
                 ++count_all;
@@ -703,6 +740,7 @@ int main(int argc, char *argv[])
                 // PrintMatrix(stdout,N,K,h);
 
             }
+           
             // PrintMatrix(fp_x,N,K,h_h);
             Repeat_flg = 1;
 
@@ -710,6 +748,7 @@ int main(int argc, char *argv[])
             gsl_matrix_complex_set_zero(I_b);
             gsl_matrix_set_zero(zeta);
 
+            printf("i = %d X\n",i );
             //データ推定
             for (j = 0; j < X_LOOP; ++j)
             {
@@ -724,9 +763,6 @@ int main(int argc, char *argv[])
                 // I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
                 // zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
                 ++count_all;
-                // printf("data %d\n",i);
-                // PrintMatrix(stdout,K,T,x);
-                // PrintMatrix(stdout,K,T,x_h);
                 
             }
             
@@ -762,7 +798,9 @@ int main(int argc, char *argv[])
     fprintf(fp_x,"MSE = %g \nmse_standard_deviation = %g\n",mse_h_n[BIG_LOOP*H_LOOP-1],standard_deviation[0]);
     fprintf(fp_x,"BER = %g \nber_standard_deviation = %g\n",bit_err_n[BIG_LOOP*X_LOOP-1],standard_deviation[1]);
     printf("BER = %g MSE = %g Computation time = %f[sec]\n",bit_err_n[BIG_LOOP*X_LOOP-1],mse_h_n[BIG_LOOP*H_LOOP-1],(double)(end-start)/ CLOCKS_PER_SEC);
-    fprintf(fp_sn_bit_err,"%f %f\n",10*log10(Pk/N0),bit_err_n[BIG_LOOP*X_LOOP-1]);
+    for(k=0;k<ENSEMBLE;k++)fprintf(fp_sn_bit_err,"%f %f\n",Pk/N0,bit_err_en[k]);
+
+    create_plotfile(output_path);
 
     fclose(fp_mse_h);
     fclose(fp_mse_h_my);

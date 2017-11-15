@@ -1,20 +1,20 @@
 //基地局のアンテナの数
-#define N 128
+#define N 32
 //ユーザ数
-#define K 64
+#define K 32
 //離散時間ステップ数
-#define T 1024
+#define T 128
 //pilot信号時間長さ(必ずTP>Kにする)
-#define Tp 128
+#define Tp 64
 //隣接基地局数
 #define DK 2
 //アンサンブル平均回数
-#define ENSEMBLE 2
+#define ENSEMBLE 10
 
 //反復回数 おおまわり
-#define BIG_LOOP 3
+#define BIG_LOOP 10
 //反復回数　小さいループ
-#define H_LOOP 30
+#define H_LOOP 10
 #define X_LOOP 10
 
 //電力
@@ -26,17 +26,16 @@ const int Pilot_flg = 0;
 //ノイズ
 double N0;
 //信号が送られる確率
-const double rho_k = 0.1;
-
+const double rho_k = 1.0;
 double a_k;
 
 int Repeat_flg = 1;
 
 //ダンピング係数
-double a = 0.5;
+double a = 1.0;
 
 //セル間電力差
-double cell_diff = 0.5;
+double cell_diff = 1.0;
 
 gsl_matrix_complex* x;
 gsl_matrix_complex* h;
@@ -57,6 +56,9 @@ gsl_matrix_complex* I_b;
 gsl_matrix* zeta;
 
 gsl_matrix* pilot;
+
+//各ユーザーの電力
+double* user_p;
 
 
 
@@ -167,7 +169,6 @@ void init_x()
 	int n = decision_hadamard_size();
 	int size = (int)pow(2,n);
 	int *P = (int *)malloc(sizeof(int)*size);
-	double p_p = sqrt(Pk/2);
 
 	gsl_matrix* orthogonal = gsl_matrix_calloc(size,size);
 	gsl_matrix* re_pilot = gsl_matrix_calloc(size,size);
@@ -194,6 +195,9 @@ void init_x()
 
 	for (k = 0; k < K; ++k)
 	{
+		double p_p = sqrt(user_p[k]/2);
+		a_k = sqrt(user_p[k]/(2*rho_k));
+
 		Permutation(data_size,P);
 		RealInterleaver(data_size,data,data_tmp,P);
 		for (t = 0; t < T; ++t)
@@ -240,9 +244,10 @@ void init_x()
 			//左下のpilot信号　半分パイロットの場合
 			else if(Pilot_flg == 0 && k >= K/DK && t < Tp)
 			{
-				z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
-				z.dat[0] = sqrt(cell_diff) * z.dat[0];
-				z.dat[1] = sqrt(cell_diff) * z.dat[1];
+				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k-K/DK,t),p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
+				// z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
+				// z.dat[0] = sqrt(cell_diff) * z.dat[0];
+				// z.dat[1] = sqrt(cell_diff) * z.dat[1];
 			}
 
 			//下のpilot信号 contaminationの場合
@@ -271,8 +276,8 @@ void init_x()
 				}
 				else{
 					GSL_SET_COMPLEX(&z,
-						sqrt(cell_diff)*a_k*data_tmp[t-Tp]*tmp[UniformBit()],
-						sqrt(cell_diff)*a_k*data_tmp[t-Tp]*tmp[UniformBit()]);
+						a_k*data_tmp[t-Tp]*tmp[UniformBit()],
+						a_k*data_tmp[t-Tp]*tmp[UniformBit()]);
 				}
 			}
 
@@ -299,6 +304,25 @@ void init_w()
 			gsl_matrix_complex_set(w,n,t,z);
 		}
 	}
+}
+
+void init_user_p()
+{
+	int k;
+	for (k = 0; k < K; ++k)
+	{
+		//自セルユーザーの場合
+		if(k < K/DK){
+			user_p[k] = Pk + GaussianNoise(0.1);
+		}
+		//他セルユーザーの場合
+		else{
+			user_p[k] = cell_diff*Pk + GaussianNoise(cell_diff*0.1);
+		}
+
+		if(user_p[k] < 0)user_p[k]=0.0;
+	}
+
 }
 
 void init_xi()
@@ -379,9 +403,13 @@ void init(double sn)
 
 	pilot = gsl_matrix_calloc(K,T);
 
+	user_p  = (double *)malloc( sizeof(double) *K );
+
 	a_k = sqrt(Pk/(2*rho_k));
-	
-	
+
+	//各ユーザの電力初期化
+	init_user_p();
+
 	//通信路h初期化
 	init_h();
 
@@ -393,6 +421,7 @@ void init(double sn)
 	
 	//雑音wの初期化
 	init_w();
+
 
 
 
