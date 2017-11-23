@@ -242,16 +242,16 @@ void create_plotfile(char *outputpath)
 	fprintf(fp_ber_plt,"set logscale y\n");
 	fprintf(fp_ber_plt,"set xlabel \"n\"\n");
 	fprintf(fp_ber_plt,"set ylabel \"BER\"\n");
-	fprintf(fp_ber_plt,"plot \"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w l linewidth 4 title \"whole\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_ber_plt,"replot \"bit_err_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w l linewidth 4 title \"my\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_ber_plt,"replot \"bit_err_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w l linewidth 4 title \"other\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_ber_plt,"plot \"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_ber_plt,"replot \"bit_err_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_ber_plt,"replot \"bit_err_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,Pk/N0);
 
 	fprintf(fp_mse_plt,"set logscale y\n");
 	fprintf(fp_mse_plt,"set xlabel \"n\"\n");
 	fprintf(fp_mse_plt,"set ylabel \"MSE\"\n");
-	fprintf(fp_mse_plt,"plot \"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w l linewidth 4 title \"whole\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_mse_plt,"replot \"mse_h_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w l linewidth 4 title \"my\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_mse_plt,"replot \"mse_h_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w l linewidth 4 title \"other\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_mse_plt,"plot \"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_mse_plt,"replot \"mse_h_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_mse_plt,"replot \"mse_h_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,Pk/N0);
 
 	fclose(fp_mse_plt);
 	fclose(fp_ber_plt);

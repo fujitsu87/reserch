@@ -1,15 +1,15 @@
 //基地局のアンテナの数
-#define N 32
+#define N 128
 //ユーザ数
 #define K 32
 //離散時間ステップ数
 #define T 128
 //pilot信号時間長さ(必ずTP>Kにする)
-#define Tp 64
+#define Tp 32
 //隣接基地局数
 #define DK 2
 //アンサンブル平均回数
-#define ENSEMBLE 10
+#define ENSEMBLE 50
 
 //反復回数 おおまわり
 #define BIG_LOOP 10
@@ -32,10 +32,10 @@ double a_k;
 int Repeat_flg = 1;
 
 //ダンピング係数
-double a = 1.0;
+double a = 0.5;
 
 //セル間電力差
-double cell_diff = 1.0;
+double cell_diff = 0.1;
 
 gsl_matrix_complex* x;
 gsl_matrix_complex* h;
@@ -59,8 +59,6 @@ gsl_matrix* pilot;
 
 //各ユーザーの電力
 double* user_p;
-
-
 
 //--------------------------------初期化関数--------------------------------------
 
@@ -212,6 +210,7 @@ void init_x()
 				// 左のpilot信号
 				if(t < Tp)
 				{
+					// GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
 					GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t),p_p*gsl_matrix_get(im_pilot,k,t));
 				}
 	
@@ -238,16 +237,16 @@ void init_x()
 			else if(Pilot_flg == 0 && k < K/DK && t >= T-Tp)
 			{
 				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t-(T-Tp)),p_p*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
-				// GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
+				// GSL_SET_COMPLEX(&z,p_p*tmp[UniformBit()],p_p*tmp[UniformBit()]);
 			}
 
 			//左下のpilot信号　半分パイロットの場合
 			else if(Pilot_flg == 0 && k >= K/DK && t < Tp)
 			{
-				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k-K/DK,t),p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
-				// z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
-				// z.dat[0] = sqrt(cell_diff) * z.dat[0];
-				// z.dat[1] = sqrt(cell_diff) * z.dat[1];
+				// GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k-K/DK,t),p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
+				z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
+				z.dat[0] = sqrt(cell_diff) * z.dat[0];
+				z.dat[1] = sqrt(cell_diff) * z.dat[1];
 			}
 
 			//下のpilot信号 contaminationの場合
@@ -269,15 +268,25 @@ void init_x()
 				else GSL_SET_COMPLEX(&z,0,0);
 */
 				//permutationする
-				if(k < K/DK){
-					GSL_SET_COMPLEX(&z,
-						a_k*data_tmp[t]*tmp[UniformBit()],
-						a_k*data_tmp[t]*tmp[UniformBit()]);
+				//sync
+				if(Pilot_flg == 1)
+				{
+						GSL_SET_COMPLEX(&z,
+							a_k*data_tmp[t-Tp]*tmp[UniformBit()],
+							a_k*data_tmp[t-Tp]*tmp[UniformBit()]);
 				}
+				//shift
 				else{
-					GSL_SET_COMPLEX(&z,
-						a_k*data_tmp[t-Tp]*tmp[UniformBit()],
-						a_k*data_tmp[t-Tp]*tmp[UniformBit()]);
+					if(k < K/DK){
+						GSL_SET_COMPLEX(&z,
+							a_k*data_tmp[t]*tmp[UniformBit()],
+							a_k*data_tmp[t]*tmp[UniformBit()]);
+					}
+					else{
+						GSL_SET_COMPLEX(&z,
+							a_k*data_tmp[t-Tp]*tmp[UniformBit()],
+							a_k*data_tmp[t-Tp]*tmp[UniformBit()]);
+					}
 				}
 			}
 
@@ -288,7 +297,9 @@ void init_x()
 	free(im_pilot);
 	free(P);
 	free(data);
+	free(data_tmp);
 	// PrintMatrix(stdout,K,T,x);
+	// PrintRealMatrix(stdout,K,T,pilot);
 	// PrintRealMatrix(stdout,size,size,im_pilot);
 }
 
@@ -313,11 +324,13 @@ void init_user_p()
 	{
 		//自セルユーザーの場合
 		if(k < K/DK){
-			user_p[k] = Pk + GaussianNoise(0.1);
+			user_p[k] = Pk + GaussianNoise(0);
+			// user_p[k] = Pk + GaussianNoise(N0*0.1);
 		}
 		//他セルユーザーの場合
 		else{
-			user_p[k] = cell_diff*Pk + GaussianNoise(cell_diff*0.1);
+			user_p[k] = cell_diff*Pk + GaussianNoise(cell_diff*0);
+			// user_p[k] = cell_diff*Pk + GaussianNoise(cell_diff*N0*0.1);
 		}
 
 		if(user_p[k] < 0)user_p[k]=0.0;
@@ -332,10 +345,11 @@ void init_xi()
 	{
 		for (j = 0; j < T; ++j)
 		{
-			double tmp[2] = {1.0,0.0};
+			double tmp[2] = {Pk,0.0};
 			int index = (int)gsl_matrix_get(pilot,i,j);
 			gsl_matrix_set(xi ,i,j,tmp[index]);
-			gsl_matrix_set(xi_b ,i,j,1);
+			// gsl_matrix_set(xi ,i,j,Pk);
+			gsl_matrix_set(xi_b ,i,j,Pk);
 		}
 	}
 
