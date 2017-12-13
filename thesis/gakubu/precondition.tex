@@ -1,0 +1,169 @@
+\section{アップリンクマルチユーザMIMO}
+本研究は，複数ユーザが基地局に情報を送るアップリンクを想定して研究を行った．ユーザ数を$K$，受信アンテナ数を$N$とし，ユーザは単一の送信アンテナを持つことを想定する．また，簡単のため，フェージング係数が観測時間$T$の間一定であるブロックフェージング通信路を仮定する．受信信号$\boldsymbol{Y}\in\mathbb{C}^{N\times T}$は式(\ref{eq:ReceiveSignal})にて与えられる．
+\begin{equation} 
+	\label{eq:ReceiveSignal}
+	\boldsymbol{Y} = \frac{1}{\sqrt{N}}\boldsymbol{HX+W}.
+\end{equation}
+$1/\sqrt{N}$は正規化定数であり，アンテナ数の上昇による電力の上昇を抑える．$\boldsymbol{X}\in\mathbb{C}^{K\times T}$は全ユーザの送信信号であり，$\boldsymbol{H}\in\mathbb{C}^{N\times K}$はすべてのユーザとアンテナ間のフェージング係数である．ここで，$\boldsymbol{H}$に関して，すべての行列成分は，互いに独立で同一の分布(independent and identically distribution : i.i.d)のレイリーフェージングに従うと仮定する．具体的には，それぞれが独立した円対称複素ガウス雑音(circularly symmetric complex Gaussian : CSCG)であり，分散は1とした．また，$\boldsymbol{W}\in\mathbb{C}^{N\times T}$は受信時に生じる雑音のことであり，それぞれが独立した円対称複素ガウス雑音で，分散は定数$N_0$とした．
+
+ここで，基地局間干渉のため，ユーザーを二つのグループに分ける．一方のグループは自分の基地局のエリアに存在するユーザで，$K/2$人で構成され，残る$K/2$人のユーザは別の基地局のエリアのユーザであり，自分の基地局の信号に干渉してくる．これを踏まえ，$\boldsymbol{X}$を式(\ref{eq:SendSignal})のように定義する．
+\begin{equation} 
+	\label{eq:SendSignal}
+	\boldsymbol{X} =  \left(
+		\begin{array}{cccc}
+			\boldsymbol{X}_{11} &\boldsymbol{X}_{12} &\boldsymbol{P}\\
+			\boldsymbol{P} &\boldsymbol{X}_{21} &\boldsymbol{X}_{22}.
+		\end{array}
+	\right)
+\end{equation}
+$\boldsymbol{P}$は$K/2\times T_{p}$のパイロット行列であり，基地局側にとってこの信号は既知である．$\boldsymbol{X}$の行方向は観測時間$T$であるので，$\boldsymbol{P}$の送信時間の違いによって，行列(\ref{eq:SendSignal})は上半分と下半分で基地局を分けている．また，$\boldsymbol{X}$信号はそれぞれ，式(\ref{eq:QPSK})のような電力1のQPSK信号である．電力1というのは，ユーザの長期的な平均電力とする．
+\begin{equation} 
+	\label{eq:QPSK}
+	x_{kt} = \{u+jv:u,v=\pm\sqrt{1/2}\}.
+\end{equation}
+
+\section{通信路推定とデータ推定}
+受信側で推定するデータを$\hat{\boldsymbol{X}}$として，ここでは，推定するデータは事後平均推定
+\begin{equation} 
+	\label{eq:PosterorMean}
+	\hat{\boldsymbol{X}}=\mathbb{E}[\boldsymbol{X}|\boldsymbol{Y},\boldsymbol{P}]
+\end{equation}	
+を目標とする．しかし，大規模MIMOシステムでは，式(\ref{eq:PosterorMean})は$K,N,T$の上昇に伴い，指数関数的に上昇するため現実的な時間で解くことは，不可能である．そこで，AMPアルゴリズムを用いる．詳しい式の導出は，\ref{sec:AMP}章に譲る．AMPアルゴリズムを使う条件として，$N，K，T，Tp$が無限大に近く，$\alpha=K/N$，$\beta=T/N$，$\tau=T_{p}/T$が一定で保たれる必要がある．AMPアルゴリズムでは，表\ref{tb:Message}で示される8つのメッセージをそれぞれ交換することで推定を行っていく．初期値として，パイロット信号が入っている$(k,t) \in \{1,...,K/2\}\times \{T-T_{p}+1,...,T\}$もしくは$(k,t) \in \{K/2+1,...,K\}\times \{1,...,T_{P}\}$のとき，$\hat{x}_{kt}=x_{kt}$，$\xi_{kt}=0$となり，パイロット信号が入っていない，それ以外の成分は$\hat{x}_{kt}=0$，$\xi_{kt}=1$とした．また，他の要素は，$\hat{h}_{nk}=0$，$\eta_{nt}=1$，$\overline{I}_{nt}=0$，$\zeta_{nt}=0$とした．
+\begin{table}[htb]
+	\begin{center}
+		\caption{AMPアルゴリズムで使用されるメッセージ \label{tb:Message}}
+		\begin{tabular}{|c|c|} \hline
+			$\hat{x}_{kt}$ & $x_{kt}$の事後平均 \\ \hline
+			$\xi_{kt}$ & $x_{kt}$の事後分散 \\ \hline
+			$\overline{x}_{kt}$ & $x_{kt}$の外部平均 \\ \hline
+			$\overline{\xi}_{kt}$ & $x_{kt}$の外部分散 \\ \hline\hline
+			$\hat{h}_{nk}$ & $h_{nk}$の事後平均 \\ \hline
+			$\eta_{nk}$ & $h_{nk}$の事後分散 \\ \hline\hline
+			$\overline{I}_{nt}$ & $y_{nt}$の干渉の平均 \\ \hline
+			$\zeta_{nt}$ & $y_{nt}$の干渉の分散 \\ \hline
+		\end{tabular}
+	\end{center}
+\end{table}
+
+ここで，各メッセージを計算するための定義式を記す．まず，干渉を差し引いた出力$z\in\mathbb{C}$は
+\begin{equation} 
+	\label{eq:z}
+	z_{nt}=\frac{y_{nt}-\overline{I}_{nt}}{N_{0}+\zeta_{nt}}
+\end{equation}
+と定義する．$\Re[x_{kt}]$の軟判定関数として，以下のような関数を定義する．
+\begin{equation} 
+	\label{eq:fk}
+	f_{k}(u;v)=\frac{1}{\sqrt{2}}
+			\frac{e^{\sqrt{2}u/v}-e^{-\sqrt{2}u/v}}{e^{\sqrt{2}u/v}+e^{-\sqrt{2}u/v}}.
+\end{equation}
+複素関数$A_{kt}(z)$として，以下のような関数を定義する．
+\begin{equation} 
+	\label{eq:Akt}
+	A_{kt}(z)=\Re[z]\frac{\partial f_{k}}{\partial u}(\Re[\overline{x}_{kt}];\overline{\xi}_{kt})+j\Im[z]\frac{\partial f_{k}}{\partial u}(\Im[\overline{x}_{kt}];\overline{\xi}_{kt}).
+\end{equation}
+データ推定に関わるメッセージの式を以下に示す．
+\begin{equation} 
+	\label{eq:x_h}
+	\hat{x}_{kt}=f_{k}(\Re[\overline{x}_{kt}],\overline{\xi}_{kt})+jf_{k}(\Im[\overline{x}_{kt}],\overline{\xi}_{kt}),
+\end{equation}
+\begin{equation} 
+	\label{eq:xi}
+	\xi_{kt} = 1 - |\hat{x}_{kt}|^2,
+\end{equation}
+\begin{equation} 
+	\label{eq:x_b}
+	\overline{x}_{kt} = 
+		\frac{\overline{\xi}_{kt}}{\sqrt{N}}
+			\sum_{n=1}^{N}\hat{h}^{*}_{nk}z_{nt}
+			+\left(
+				1-\frac{\overline{\xi}_{kt}}{N}\sum_{n=1}^{N}\eta_{nk}|z_{nt}|^2
+			\right)
+			\hat{x}_{kt},
+\end{equation}
+\begin{equation} 
+	\label{eq:xi_b}
+	\overline{\xi}_{kt}=
+	\left(
+		\frac{1}{N}
+		\sum_{n=1}^{N}
+			\frac
+			{|\hat{h}_{nk}|^{2}}
+			{N_{0}+\zeta_{nt}}
+	\right)^{-1}.
+\end{equation}
+通信路推定に関するメッセージの式を示す．
+\begin{equation}
+	\label{eq:h_h}
+	\hat{h}_{nk}=
+	\frac
+		{\eta_{nk}}
+		{\sqrt{N}}
+	\sum_{t=1}^{T}
+		\hat{x}^{*}_{kt}z_{nt}
+	+
+	\left(
+		1-\eta_{nk}
+	\right)
+	\hat{h}_{nk}
+	-
+	\frac
+		{\eta_{nk}}
+		{N}
+	\sum_{t=1}^{T}
+		\overline{\xi}_{kt}
+		A^{*}_{kt}
+		\left(
+			\hat{h}_{nk}^{*}
+			z_{nt}
+		\right)
+		z_{nt},	
+\end{equation}
+\begin{equation}
+	\label{eq:eta}
+	\eta_{nk}=
+	\left(
+		1+
+		\frac{1}{N}
+		\sum^{T}_{t=1}
+			\frac
+			{|\hat{x}_{kt}|^{2}}
+			{N_{0}+\zeta_{nt}}
+	\right)^{-1}.
+\end{equation}
+最後に，干渉に関するメッセージの式を示す．
+\begin{equation}
+	\label{eq:I_b}
+	\overline{I}_{nt}=
+		\frac{1}{\sqrt{N}}
+		\sum_{k=1}^{K}
+			\hat{h}_{nk}\hat{x}_{kt}
+		-
+		\frac{1}{N}
+		\sum^{K}_{k=1}
+			\overline{\xi}_{kt}
+			A_{kt}
+			\left(
+				\hat{h}_{nk}^{*}
+				z_{nt}
+			\right)
+			\hat{h}_{nk}
+		-
+		\frac{1}{N}
+		\sum^{K}_{k=1}
+			\eta_{nk}
+			|\hat{x}_{kt}|^{2}
+			z_{nt},
+\end{equation}
+\begin{equation}
+	\label{eq:zeta}
+	\zeta_{nt}=
+		\sum_{k=1}^{K}
+			\left(
+				\eta_{nk}\xi_{kt}
+				+
+				\eta_{nk}|\hat{x}_{kt}|^{2}
+				+
+				|\hat{h}_{nk}|^{2}\xi_{kt}
+			\right)
+\end{equation}
+AMPアルゴリズムでは，式(\ref{eq:x_h})-(\ref{eq:zeta})を計算することで，通信路とデータを同時推定する．

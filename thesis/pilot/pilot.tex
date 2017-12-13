@@ -1,0 +1,68 @@
+\documentclass[11pt]{jsarticle}
+\usepackage{amsthm,amsmath,amssymb,listings,ascmac,jlisting}
+\usepackage[dvipdfmx]{graphicx}
+
+
+\lstset{%
+  language={C},
+  basicstyle={\small},%
+  identifierstyle={\small},%
+  commentstyle={\small\itshape},%
+  keywordstyle={\small\bfseries},%
+  ndkeywordstyle={\small},%
+  stringstyle={\small\ttfamily},
+  frame={tb},
+  breaklines=true,
+  columns=[l]{fullflexible},%
+  % numbers=left,%
+  xrightmargin=0zw,%
+  xleftmargin=3zw,%
+  numberstyle={\scriptsize},%
+  stepnumber=1,
+  numbersep=1zw,%
+  lineskip=-0.5ex%
+}
+
+\makeatletter
+\long\def\@makecaption#1#2{{\small
+  \advance\leftskip .0628\linewidth
+  \advance\rightskip .0628\linewidth
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{#1\hskip1zw\relax #2}%
+  \ifdim \wd\@tempboxa <\hsize \centering \fi
+%  #1\hskip1zw\relax #2\par
+  #1{\hskip1zw\relax}#2\par
+  \vskip\belowcaptionskip}}
+\makeatother
+
+
+\title{pilot数の限界}
+\author{豊橋技術科学大学大学院　電気・電子情報工学専攻　M153259　藤塚 拓実}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section{課題1}
+流体の数値シミュレーションの将来について，今後は計算機の演算性能・手法に伴う計算もモデルや，方程式が多様化していくと考えている．
+
+講義の中でも述べられていたが，計算速度や計算精度，データ量(メモリ)は有限である．ムーアの法則が頭打ちになっている現状で，計算機性能の向上を待つのは得策ではない．
+
+
+そこで，計算したい流体のシミュレーションに合わせてモデルを変更したり，プログラムを改善する必要がある．ここでいう，改善とは，アルゴリズムや方程式を変更し，計算オーダを下げることはもちろんであるが，並列計算用にモデルを変更することも含まれる．
+
+数値計算シミュレーションでは当たり前のように使われている並列計算だが，まだまだ過渡期である．特に最近ではCPU並列化させたマルチコアだけでなく,GPUを使用した並列計算手法である，GPGPU(General-Purpose computing on GPU）も増えてきた．
+
+数値計算手法には，陰解法と陽解法がある．陰解法は，反復に際し前ステップの情報が必要な計算手法であり，陽解法は前ステップの情報を必要とせず独立に解くことができる計算手法である．並列計算に有利な計算手法は陽解法であるため，陰解法を陽解法に変更することで，高速化することができる．例として，MPS(Moving Particle Simulation)陽解法では，(半)陰的アルゴリズムを陽的アルゴリズムに変更することで，流体の数値計算を行い，同程度の精度で計算することに成功している．
+
+このような並列計算手法を使いこなすには，流体の物理モデルだけでなく，並列プログラムと計算機アーキテクチャにも精通している必要がある．今後，計算手法の多様化に従い，多くの高速プログラミング技術者が求められる．
+
+\section{課題2}
+講義では，流体の数値計算の基礎と応用を学ぶことができた．私の専門は流体ではないため，詳しい理論は理解が難しかったが，多くのモデルがあり，それらを研究目的によって使い分ける点が似ていると思った．
+
+また，慎重に精査して計算を行わなければならないと，間違った解釈のまま研究開発が進んでしまうことは，私も注意したい．
+
+今後の流体シミュレーションは，より多くの工業製品開発現場において重要な要素と考えられる．そのため，今回の講義で教えて頂いたソフトウェアや考え方は非常に有意義なものであった．
+
+\bibliographystyle{ieeetr}
+\bibliography{reference}
+\end{document}

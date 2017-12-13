@@ -1,64 +1,4 @@
-//基地局のアンテナの数
-#define N 128
-//ユーザ数
-#define K 32
-//離散時間ステップ数
-#define T 128
-//pilot信号時間長さ(必ずTP>Kにする)
-#define Tp 32
-//隣接基地局数
-#define DK 2
-//アンサンブル平均回数
-#define ENSEMBLE 50
-
-//反復回数 おおまわり
-#define BIG_LOOP 10
-//反復回数　小さいループ
-#define H_LOOP 10
-#define X_LOOP 10
-
-//電力
-const double Pk = 1.0;
-
-//allpilotかどうか　0...shift 1...all contamination...2
-const int Pilot_flg = 0;
-
-//ノイズ
-double N0;
-//信号が送られる確率
-const double rho_k = 1.0;
-double a_k;
-
-int Repeat_flg = 1;
-
-//ダンピング係数
-double a = 0.5;
-
-//セル間電力差
-double cell_diff = 0.1;
-
-gsl_matrix_complex* x;
-gsl_matrix_complex* h;
-gsl_matrix_complex* w;
-gsl_matrix_complex* y;
-
-gsl_matrix_complex* z;
-
-gsl_matrix_complex* x_h;
-gsl_matrix* x_h_abs2;
-gsl_matrix* xi;
-gsl_matrix_complex* x_b;
-gsl_matrix* xi_b;
-gsl_matrix_complex* h_h;
-gsl_matrix* h_h_abs2;
-gsl_matrix* eta;
-gsl_matrix_complex* I_b;
-gsl_matrix* zeta;
-
-gsl_matrix* pilot;
-
-//各ユーザーの電力
-double* user_p;
+#include "./config.c"
 
 //--------------------------------初期化関数--------------------------------------
 
@@ -203,8 +143,8 @@ void init_x()
 			double tmp[2] = {-1.0,1.0};
 			gsl_complex z;
 
-			//左のpilot 全部パイロットの場合
-			if(Pilot_flg == 1 && t < Tp)
+			//左のpilot 同期パイロットの場合
+			if(Pilot_flg == 1 && t < Tp && gsl_matrix_get(pilot,k,t)==1)
 			{
 				// z = gsl_matrix_complex_get(x,k,T-1-t);
 				// 左のpilot信号
@@ -234,17 +174,22 @@ void init_x()
 */
 // DK=2のとき
 			//右上のpilot信号
-			else if(Pilot_flg == 0 && k < K/DK && t >= T-Tp)
+			else if(Pilot_flg == 0 && k < K/DK && gsl_matrix_get(pilot,k,t)==1)
 			{
-				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t-(T-Tp)),p_p*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
-				// GSL_SET_COMPLEX(&z,p_p*tmp[UniformBit()],p_p*tmp[UniformBit()]);
+				//アダマール
+				// GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t-(T-Tp)),p_p*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
+				
+				//乱数
+				GSL_SET_COMPLEX(&z,p_p*tmp[UniformBit()],p_p*tmp[UniformBit()]);
 			}
 
-			//左下のpilot信号　半分パイロットの場合
-			else if(Pilot_flg == 0 && k >= K/DK && t < Tp)
+			//左下のpilot信号　シフトパイロットの場合
+			else if(Pilot_flg == 0 && k >= K/DK && gsl_matrix_get(pilot,k,t)==1)
 			{
-				// GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k-K/DK,t),p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
-				z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
+				//乱数
+				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k-K/DK,t),p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
+				
+				// z = gsl_matrix_complex_get(x,k-K/DK,t+T-Tp);
 				z.dat[0] = sqrt(cell_diff) * z.dat[0];
 				z.dat[1] = sqrt(cell_diff) * z.dat[1];
 			}
@@ -298,7 +243,7 @@ void init_x()
 	free(P);
 	free(data);
 	free(data_tmp);
-	// PrintMatrix(stdout,K,T,x);
+
 	// PrintRealMatrix(stdout,K,T,pilot);
 	// PrintRealMatrix(stdout,size,size,im_pilot);
 }
@@ -338,6 +283,23 @@ void init_user_p()
 
 }
 
+void init_xi_first()
+{
+	int i,j;
+	for (i = 0; i < K; ++i)
+	{
+		for (j = 0; j < T; ++j)
+		{
+			double tmp[2] = {Pk,0.0};
+			int index = (int)gsl_matrix_get(pilot,i,j);
+			if(j >= Tp && j < (T-Tp))index = 1;
+			gsl_matrix_set(xi ,i,j,tmp[index]);
+			// gsl_matrix_set(xi ,i,j,Pk);
+			gsl_matrix_set(xi_b ,i,j,Pk);
+		}
+	}
+	// PrintRealMatrix(stdout,K,T,xi);
+}
 void init_xi()
 {
 	int i,j;
@@ -347,12 +309,13 @@ void init_xi()
 		{
 			double tmp[2] = {Pk,0.0};
 			int index = (int)gsl_matrix_get(pilot,i,j);
+			// if(j >= Tp && j < (T-Tp))index = 1;
 			gsl_matrix_set(xi ,i,j,tmp[index]);
 			// gsl_matrix_set(xi ,i,j,Pk);
 			gsl_matrix_set(xi_b ,i,j,Pk);
 		}
 	}
-
+	// PrintRealMatrix(stdout,K,T,xi);
 }
 
 void init_eta()

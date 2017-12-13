@@ -16,6 +16,36 @@ double culc_complex_mse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * 
 	return ans;
 }
 
+//Aの平均を計算
+double culc_avr(int n,int m,gsl_matrix * A)
+{
+	int num = n*m;
+	int i,j;
+	double ans = 0;
+	for (i = 0; i < n; ++i)
+	{
+		for (j = 0; j < m; ++j)
+		{
+			ans += gsl_matrix_get(A,i,j);
+		}
+	}
+	ans = ans/num;
+	return ans;
+}
+
+//Aの平均を計算
+void tmp_set_eta(int n,int m,double init_num)
+{
+	int i,j;
+	for (i = 0; i < n; ++i)
+	{
+		for (j = 0; j < m; ++j)
+		{
+			gsl_matrix_set(eta,i,j,init_num);
+		}
+	}
+	return;
+}
 //AとBの平均2乗誤差(MSE)を出力 自セル
 double culc_complex_mse_etc(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * B,int jstart)
 {
