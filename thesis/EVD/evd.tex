@@ -1,0 +1,74 @@
+\documentclass[11pt]{jsarticle}
+\usepackage{amsthm,amsmath,amssymb,listings,ascmac,jlisting}
+\usepackage[dvipdfmx]{graphicx}
+
+
+\lstset{%
+  language={C},
+  basicstyle={\small},%
+  identifierstyle={\small},%
+  commentstyle={\small\itshape},%
+  keywordstyle={\small\bfseries},%
+  ndkeywordstyle={\small},%
+  stringstyle={\small\ttfamily},
+  frame={tb},
+  breaklines=true,
+  columns=[l]{fullflexible},%
+  % numbers=left,%
+  xrightmargin=0zw,%
+  xleftmargin=3zw,%
+  numberstyle={\scriptsize},%
+  stepnumber=1,
+  numbersep=1zw,%
+  lineskip=-0.5ex%
+}
+
+\makeatletter
+\long\def\@makecaption#1#2{{\small
+  \advance\leftskip .0628\linewidth
+  \advance\rightskip .0628\linewidth
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{#1\hskip1zw\relax #2}%
+  \ifdim \wd\@tempboxa <\hsize \centering \fi
+%  #1\hskip1zw\relax #2\par
+  #1{\hskip1zw\relax}#2\par
+  \vskip\belowcaptionskip}}
+\makeatother
+
+
+\title{EVD-BASED CHANNEL ESTIMATION IN MULTICELL MULTIUSER MIMO SYSTEMS
+WITH VERY LARGE ANTENNA ARRAYS}
+\author{Hien Quoc Ngo Erik G. Larsson}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section{システムモデル}
+$L$個のセルを有するマルチセルMU-MIMOを考える。 各セルは、$K$個の単一アンテナユーザと、$M$個のアンテナを備えた1つのBSを含む。すべてのセルが同一周波数を使用。すべてのユーザは所望のBSに信号を伝送するアップリンクを考える。$l$番目のBSにおけるM $\times$1の受信ベクトルは以下のとおりである。
+\begin{equation}
+  {\bf y}_{l}=\sqrt{p_{u}}\sum_{i=1}^{L}{\bf G}_{li}{\bf x}_{i}(n)+{\bf n}_{l}(n)
+\end{equation}
+$\sqrt{p_{u}}{\bf x}_{i}(n)$は$i$番目のセル（各ユーザによって使用される平均電力は$p_{u}$である）内のK個のユーザによって集合的に送信されたシンボルのK×1ベクトルである。${\bf n}_{l}(n)$はM×1の加算白色ノイズであり、その要素は平均がゼロで単位分散がガウスである。${\bf G}_{li}$はl番目のBSとK個のユーザとの間のM×Kチャネル行列である。
+各要素$g_{limk}\triangleq[Gli]mk$は、l番目のBSのm番目のアンテナとi番目のセルのk番目のユーザーとの間のチャネル係数であり以下の式で表される。
+\begin{equation}
+  g_{limk}=h_{limk}\sqrt{\beta_{lik}},m=1,2,...M
+\end{equation}
+$h_{limk}$は、i番目のセルのk番目のユーザからl番目のBSのm番目のアンテナへの高速フェージング係数である。$h_{limk}$は平均0分散１の確率変数。$\beta_{lik}
+$は幾何学的な減衰とシャドウフェージングを表し、アンテナインデックスとは無関係であると仮定され、定数であり、先験的に知られている。
+そして、チャネル行列${\bf G}_{li}$は、次式で表される。
+\begin{equation}
+  {\bf G}_{li}={\bf H}_{li}{\bf D}_{li}^{1/2}
+\end{equation}
+${\bf H}_{li}$はi番目のセルとl番目のBSのKユーザー間の高速フェージング係数M×K行列であり、$[H_{li}]_{mk} = h_{limk}$であり、$D_{li}$は対角要素が$[D_{li}]_{kk} = \beta_{lik}$であるK×K対角行列である。
+\section{数学的予備知識}
+受信ベクトル${\bf y}_{l}$の共分散行列の性質を考察する。 （1）と（3）から、以下の共分散行列が与えられる。
+\begin{equation}
+  {\bf R_{y}}\triangleq\mathbb{E}\{{\bf y_{l}y_{l}^{H}}\}=p_{u}\sum_{i=1}^{L}{\bf H}_{li}{\bf D}_{li}{\bf H}_{li}^{H}+{\bf I}_{M}
+\end{equation}
+多数の法則から、BSアンテナの数が多い場合、高速チャネル係数がi.i.dである場合には、 ユーザとBSとの間のチャネルベクトルは、対に直交するようになる、すなわち、
+\begin{equation}
+  \frac{1}{M}{\bf H}_{li}^{H}{\bf H}_{lj}\to\delta_{ij}{\bf I}_{K},as M\to\infty
+\end{equation}
+\bibliographystyle{ieeetr}
+\bibliography{reference}
+\end{document}

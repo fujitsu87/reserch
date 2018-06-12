@@ -283,6 +283,25 @@ void init_user_p()
 
 }
 
+void init_xi_tmp()
+{
+	int i,j;
+	for (i = 0; i < K; ++i)
+	{
+		for (j = 0; j < T; ++j)
+		{
+			double tmp[2] = {Pk,0.0};
+			int index = (int)gsl_matrix_get(pilot,i,j);
+			// if(j >= Tp && j < (T-Tp) && Pilot_flg==0)index = 1;
+			// else if(Pilot_flg==1)index = 1;
+			gsl_matrix_set(xi ,i,j,0.5);
+			// gsl_matrix_set(xi ,i,j,Pk);
+			gsl_matrix_set(xi_b ,i,j,Pk);
+		}
+	}
+	// PrintRealMatrix(stdout,K,T,xi);
+}
+
 void init_xi_first()
 {
 	int i,j;
@@ -292,10 +311,12 @@ void init_xi_first()
 		{
 			double tmp[2] = {Pk,0.0};
 			int index = (int)gsl_matrix_get(pilot,i,j);
-			if(j >= Tp && j < (T-Tp))index = 1;
+			if(j >= Tp && j < (T-Tp) && Pilot_flg==0)index = 1;
+			else if(Pilot_flg==1)index = 1;
 			gsl_matrix_set(xi ,i,j,tmp[index]);
 			// gsl_matrix_set(xi ,i,j,Pk);
 			gsl_matrix_set(xi_b ,i,j,Pk);
+			// gsl_matrix_set(xi ,i,j,tmp[index]);
 		}
 	}
 	// PrintRealMatrix(stdout,K,T,xi);
@@ -334,8 +355,8 @@ void init_x_h()
 {
 	int k,t;
 	gsl_complex def;
-	def.dat[0] = 0;
-	def.dat[1] = 0;
+	def.dat[0] = 0.0;
+	def.dat[1] = 0.0;
 	for (k = 0; k < K; ++k)
 	{
 		for (t = 0; t < T; ++t)
@@ -352,6 +373,49 @@ void init_x_h()
 			}
 		}
 	}
+}
+
+void init_x_h_tmp()
+{
+	int k,t,n;
+	gsl_complex def,z;
+	def.dat[0] = 0;
+	def.dat[1] = 0;
+
+	gsl_matrix_complex *HH = gsl_matrix_complex_calloc(K,N);
+	gsl_matrix_complex_transpose_memcpy(HH,h);
+	for(k=0;k<K;k++){
+		for(n=0;n<N;n++){
+			if(gsl_matrix_get(pilot,k,t) == 1)
+			{
+				z=gsl_matrix_complex_get(HH,k,n);
+				z=gsl_complex_conjugate(z);
+				z=gsl_complex_mul_real(z,1/sqrt(N));
+				gsl_matrix_complex_set(HH,k,n,z);
+			}
+		}
+	}
+
+	AB(HH,y,x_b);
+
+	for (k = 0; k < K; ++k)
+	{
+		for (t = 0; t < T; ++t)
+		{
+			if(gsl_matrix_get(pilot,k,t) == 1)
+			{
+				gsl_matrix_complex_set(x_h,k,t,gsl_matrix_complex_get(x,k,t));
+				gsl_matrix_complex_set(x_b,k,t,gsl_matrix_complex_get(x,k,t));
+			}
+			else 
+			{
+
+				gsl_matrix_complex_set(x_h,k,t,def);
+				// gsl_matrix_complex_set(x_b,k,t,def);
+			}
+		}
+	}
+	HH=GSLMatrixFree(HH);
 }
 
 void init(double sn)

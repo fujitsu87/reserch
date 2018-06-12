@@ -173,14 +173,15 @@ int main(int argc, char *argv[])
 
         for (i = 0; i < BIG_LOOP; ++i)
         {
-            printf("i = %d\n",i );
+            // printf("i = %d\n",i );
 
             //通信路推定
             gsl_matrix_complex_set_zero(h_h);
             init_eta();
-            if(i==0)gsl_matrix_set_zero(xi);
-            // if(i==0)init_xi_first();
-
+            // if(i==0)gsl_matrix_set_zero(xi);
+            // gsl_matrix_set_zero(xi);
+            if(i==0)init_xi_first();
+// printf("--channel--\n");
             for (j = 0; j < H_LOOP; ++j)
             {
 
@@ -191,8 +192,8 @@ int main(int argc, char *argv[])
                 mse_h_n_other[count_h] += culc_complex_mse_etc(N,K,h,h_h,K/DK)/(double)ENSEMBLE;
                 ++count_h;
                 abs2_matrix(h_h,h_h_abs2,N,K);
-
-                printf("%f\n",culc_complex_mse(N,K,h,h_h));
+// printf("eta vs h h_h %f\n",culc_mse_eta_h());
+                // printf("%f\n",culc_complex_mse(N,K,h,h_h));
             
                 // I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
                 // zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
@@ -208,17 +209,23 @@ int main(int argc, char *argv[])
             gsl_matrix_set_zero(zeta);
 
             //データ推定
+            // init_x_h_tmp();
             init_x_h();
+            // PrintMatrix(stdout,K,T,x_b);
             // gsl_matrix_set_zero(xi);
             init_xi_first();
-            // PrintRealMatrix(stdout,N,K,eta);
+            // init_xi_tmp();
+            // init_xi();
 
             if(i==0)gsl_matrix_set_zero(eta);
             // if(i==0)tmp_set_eta(N,K,1.0);
+            // gsl_matrix_set_zero(eta);
 
             for (j = 0; j < X_LOOP; ++j)
             {
+                // PrintMatrix(stdout,N,T,I_b);
                 data_estimation(fp_x);
+                
                 // fprintf(stdout, "%d %g\n",count_x,culc_bit_error_rate(fp_bit_err,0,K));
                 bit_err_n[count_x] += culc_bit_error_rate(fp_bit_err,0,K)/(double)ENSEMBLE;
                 bit_err_n_my[count_x] += culc_bit_error_rate(fp_bit_err,0,K/DK)/(double)ENSEMBLE;
@@ -229,7 +236,7 @@ int main(int argc, char *argv[])
                 // I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
                 // zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
                 ++count_all;
-                
+// printf("%f\n",culc_complex_mse(N,T,y,I_b));
                 // fprintf(stdout,"x_h = %g  xi_err = %g h_h = %g eta_err = %g\n",culc_complex_mse(K,T,x,x_h),fabs(culc_avr(K,T,xi)-culc_complex_mse(K,T,x,x_h)),culc_complex_mse(N,K,h,h_h),fabs(culc_avr(N,K,eta)-culc_complex_mse(N,K,h,h_h)));
             }
             

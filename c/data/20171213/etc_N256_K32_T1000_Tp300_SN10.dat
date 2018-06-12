@@ -1,4 +1,4 @@
-MSE = 0.129295 
-mse_standard_deviation = -nan
-BER = 0.00962054 
-ber_standard_deviation = -nan
+MSE = 0.128342 
+mse_standard_deviation = 0.00154733
+BER = 0.00983036 
+ber_standard_deviation = 0.000843449

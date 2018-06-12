@@ -1,0 +1,126 @@
+\documentclass[11pt]{jsarticle}
+\usepackage{amsthm,amsmath,amssymb,listings,ascmac,jlisting}
+\usepackage[dvipdfmx]{graphicx}
+
+
+\lstset{%
+  language={C},
+  basicstyle={\small},%
+  identifierstyle={\small},%
+  commentstyle={\small\itshape},%
+  keywordstyle={\small\bfseries},%
+  ndkeywordstyle={\small},%
+  stringstyle={\small\ttfamily},
+  frame={tb},
+  breaklines=true,
+  columns=[l]{fullflexible},%
+  % numbers=left,%
+  xrightmargin=0zw,%
+  xleftmargin=3zw,%
+  numberstyle={\scriptsize},%
+  stepnumber=1,
+  numbersep=1zw,%
+  lineskip=-0.5ex%
+}
+
+\makeatletter
+\long\def\@makecaption#1#2{{\small
+  \advance\leftskip .0628\linewidth
+  \advance\rightskip .0628\linewidth
+  \vskip\abovecaptionskip
+  \sbox\@tempboxa{#1\hskip1zw\relax #2}%
+  \ifdim \wd\@tempboxa <\hsize \centering \fi
+%  #1\hskip1zw\relax #2\par
+  #1{\hskip1zw\relax}#2\par
+  \vskip\belowcaptionskip}}
+\makeatother
+
+\newcommand{\argmax}{\mathop{\rm argmax}\limits}
+
+\title{Blind Pilot Decontamination}
+\author{Ralf R. M\"{u}ller, Senior Member, IEEE and Laura Cottatellucci and Mikko Vehkaper\"{a}}
+\date{\today}
+
+\begin{document}
+\maketitle
+\section{システムモデル}
+T個の送信アンテナから$R>T$個の受信アンテナへの周波数フラットでブロックフェージングの狭帯域チャネルを行列方程式は以下の式で表される。
+\begin{equation}
+  \label{eq:sys}
+  \boldsymbol{Y}=\boldsymbol{HX+W}
+\end{equation}
+ここで、$\boldsymbol{X}\in\mathbb{C}^{T \times C}$はパイロット信号で多重化された送信データであり、$C\geq R^{l}$はシンボル間隔のコヒーレンス時間であり$\boldsymbol{H}\in\mathbb{C}^{R \times T}$は未知のチャネル行列であり、$\boldsymbol{Y}\in\mathbb{C}^{R \times C}$は受信信号、$\boldsymbol{Z}\in\mathbb{C}^{R \times C}$は総障害である。
+
+チャネル、データおよび減損は平均がゼロ、すなわち$EX=EH=EZ=0$であると仮定する。減損は、熱雑音および他のセルからの干渉の両方を含み、一般には白色またはガウス型ではない。
+\section{提案アルゴリズム}
+まず単一のアクティブな送信アンテナ(T=1)の場合を考える。式(\ref{eq:sys})よりその出力におけるSNRが最大になるような整合フィルタ$\boldsymbol{m}^{\dagger}$を考える。
+
+白色雑音では、SNRを最大化することは、フィルタの電力利得によって正規化された総受信電力を最大化することと等価である。よって最適なファイルは以下で示される。
+\begin{equation}
+  \boldsymbol{m}^{\circ}=\argmax_{\boldsymbol{m}}
+    \frac{
+      \boldsymbol{m^{\dagger}Jm}
+      }
+      {
+        \boldsymbol{m^{\dagger}m}
+      }
+\end{equation}
+また
+\begin{equation}
+  \boldsymbol{J}=\underset{\boldsymbol{X,Z|H}}E[YY^{\dagger}]
+\end{equation}
+である。
+一般にレイリー商と呼ばれる、（2）の右辺を最大にするベクトルmが、Jの最大固有値に対応するJの固有ベクトルであることは、線形代数の周知の結果である。この近似は、多数のアンテナ素子$R\to \infty$については厳しい、すなわち、以下の内積のほぼ確実な収束を有する。
+\begin{equation}
+  \|\boldsymbol{m}^{\circ}\|\cdot \|\boldsymbol{m}^{*}\|
+\end{equation}
+これは、雑音の最大固有値が信号の最大固有値に対して無視できる場である。ここで、$R\to \infty$は$C\to \infty$を暗黙的に意味する。したがって$R$は$C$と同様にスケールする。
+etc..
+\section{アルゴリズム}
+単一の送信機と白色雑音のアルゴリズムを見つけたので、この考えを複数の送信アンテナに適用し、有色雑音の性能を分析する。 
+
+特異値分解を考える。
+\begin{equation}
+  \label{eq:SVD}
+  \boldsymbol{Y}=\boldsymbol{U\Sigma V^{\dagger}}
+\end{equation}
+ユニタリ行列$U\in \mathbb{C}^{R \times R}$と$V\in \mathbb{C}^{C \times C}$と要素が$\sigma_{1}\geq\sigma_{2}・・・\sigma_{R}$で整列した$R\times C$対角行列$\Sigma$である。
+
+\cite{ngo}にある通り、$U$の列は$H$の列と強く相関する。この観測\cite{ngo}に基づいて、チャネル行列Hの改善された非線形推定のための2つのアルゴリズムを提案する。
+
+左特異ベクトルの行列を信号空間基底$\boldsymbol{S}\in\mathbb{C}^{R\times T}$と零空間基底$\boldsymbol{N}\in\mathbb{C}^{R\times (R-T)}$に分解する。
+\begin{equation}
+  \label{eq:unitaly}
+  \boldsymbol{U=[S|N]}
+\end{equation}
+ここで、受信信号を信号部分空間に投影し以下の式を得る。
+\begin{equation}
+  \boldsymbol{\tilde{Y}=S^{\dagger}Y}
+\end{equation}
+ヌル空間基底$N$は、後続で必要とされない。実際、完全な特異値分解(\ref{eq:SVD})を計算する必要はない。 信号部分空間$S$の基底のみが必要であり、排他的に$S$を計算するために利用可能な効率的なアルゴリズムが存在する。
+
+$R>T$という大規模MIMOの場合を考える。$T$次元の信号部分空間は、ノイズが存在する$R$次元の全空間よりもずっと小さく、ホワイトノイズは全空間の全次元に均等に分布している。したがって、信号部分空間への白色雑音の影響は、$R\to\infty$として無視できる程度になる。
+
+上記のアルゴリズムを使用して、チャネル係数を推定する必要がなくてもアレイゲインを達成することができます。実際、チャネル推定は、受信信号が信号部分空間に投影され、白色雑音の支配的部分が既に抑制されるまで遅延させることができる。
+
+複雑さを軽減するために、チャネル行列$H$を全く推定しないことは賢明である。 代わりに、部分空間チャネル
+\begin{equation}
+  \boldsymbol{\tilde{Y}=\tilde{H}X+\tilde{Z}}
+\end{equation}
+を直接考え、はるかに小さい部分空間チャネル行列$\boldsymbol{\tilde{H}}\in\mathbb{C}^{T\times T}$を推定する。データ依存投影(\ref{eq:unitaly})はノイズ$\boldsymbol{\tilde{Z}=S^{\dagger}Z}\in \mathbb{C}^{T\times C}$がデータ$X$から独立していないことを暗示しているが、この依存性を無視することは、受信アンテナRの数が大きくなるにつれてより正確になる許容可能な近似である。
+
+これを以下では負荷と呼ぶ。
+
+任意のR次元チャネルベクトルは、限界R内の任意の他のチャネルベクトルに直交する。
+
+これは、2つのチャネルベクトルが同じセル内の送信機または異なるセル内の送信機に対応するかどうかにかかわらず保持される。
+
+ゼロ負荷の限界、すなわちa = 0では、同一チャネル干渉にまたがる部分空間は信号部分空間に直交する。
+
+これは、限界R / Tにおいて、受信信号行列Yの（L + 1）T個の最大特異値が、（L + 1）T個のチャネルベクトルのユークリッド標準と同一になることを意味する。
+
+隣接セル内の送信機からのチャネルベクトルとは対照的に、どの特異値がセル内部からのチャネルベクトルに対応するかを特定することができる場合、部分空間射影によって隣接セルからの干渉を除去することができる。
+
+\bibliographystyle{ieeetr}
+\bibliography{reference}
+\end{document}

@@ -1,0 +1,154 @@
+% 第40回情報理論とその応用シンポジウム 予稿集 原稿様式
+% pTeX, Version p3.1.3, based on TeX, Version 3.141592 (sjis) (Web2C 7.5.2)
+% 本文: 日本語
+
+\documentclass{jarticle}
+\usepackage{sita2017}
+% 古いLaTeXをお使いの場合 \documentstyle[sita2017]{jarticle} として下さい
+
+% 指定ページ数に収まらない場合以下のように行間を若干狭くすると
+% 収まる場合があります
+\renewcommand{\baselinestretch}{.98}
+
+\title{
+  %和文の論文題目
+  第40回情報理論とその応用シンポジウム(SITA2017) 予稿集 原稿様式\\
+  %英文の論文題目
+  How to Write a SITA2017 Manuscript
+}
+%
+\author{
+  %和文の第一著者名
+  SITA2017事務局
+  \thanks{ %和文の所属と住所
+  〒380-8553 長野県長野市若里4-17-1 信州大学工学部電子情報システム工学科, 
+  %英文の所属と住所
+  Department of Electrical and Computer Engineering, 
+  Faculty of Engineering, Shinshu University, 
+  4-17-1 Wakasato, Nagano 380-8553, Japan. 
+  % E-mail address
+  E-mail: {\tt sita-2017@\allowbreak
+  mail.\allowbreak
+  ieice.\allowbreak
+  org}
+  }\\
+  %英文の第一著者名
+  SITA2017 Secretariat
+}
+\abstract{
+This document provides information on a SITA 2017 manuscript.
+}
+\keywords{
+SITA2017, \LaTeX, style file
+}
+
+\begin{document}
+\maketitle
+
+\section{はじめに}
+
+本稿には，SITA2017予稿集の原稿の作成・提出に関する情報が記載されています．
+
+\section{予稿集用原稿の作成}
+
+投稿されたPDF原稿ファイルをそのままUSBメモリに収録して予稿集を作製します．
+また，原稿の著作権は，電子情報通信学会に帰属します．
+シンポジウムWebサイト
+( http://www.ieice.org/ess/sita/SITA2017/ )
+に掲載してある注意事項を厳守して，PDF原稿を作成して下さい．
+
+\subsection{様式}
+
+\begin{itemize}
+\item サイズ A4判(縦297mm, 横210mm)
+\item 論文題目，著者名，あらまし，本文等全てを含み最大6頁
+\item 論文題目が英文の場合は，前置詞と冠詞を除き，単語ごとに一文字目は大文字
+\item 印刷時の上余白25mm以上，下余白20mm以上，左右余白17mm以上
+\item 2段組，10pt程度の文字
+\item PDFファイル容量 3MB以下
+\end{itemize}
+SITA2017原稿の\LaTeX スタイルファイルおよびWord用テンプレートが，SITA2017ホームページ
+\begin{center}
+http://www.ieice.org/ess/sita/SITA2017/
+\end{center}
+より入手できます．
+
+\subsection{へッダ}
+
+PDF原稿の第一頁において，
+上余白9mm(以上)右余白9mm(以上)あけ，7pt程度の文字で
+
+\begin{quotation}
+{\footnotesize
+\noindent The 40th Symposium on Information Theory\\
+and its Applications (SITA2017)\\
+Shibata, Niigata, Japan, Nov.\ 28--Dec.\ 1, 2017
+}
+\end{quotation}
+と記入して下さい．
+第二頁以降にヘッダは不要です．
+スタイルファイルを使用している場合，このへッダは自動的に挿入されます．
+
+\subsection{第一頁に記載する事項}
+
+第一頁に次の事項を記載してください．
+
+\begin{enumerate}
+ \item 本文が和文のとき
+       \begin{itemize}
+	\item 論文題目(和文と英文の両方)
+	\item 著者名(和文と英文の両方)
+	\item 著者の所属，所在地(和文と英文の両方)
+	\item あらまし(約100語の英文)
+	\item キーワード(英文で3～5 個)
+       \end{itemize}
+       なお，和文のあらましとキーワードは必要ありません．
+ \item 本文が英文のとき
+       \begin{itemize}
+	\item 論文題目(英文)
+	\item 著者名(英文)
+	\item 著者の所属，所在地(英文)
+	\item あらまし(約100語の英文)
+	\item キーワード(英文で3～5 個)
+       \end{itemize}
+\end{enumerate}
+
+
+\subsection{カラー，写真について}
+
+SITA2017予稿集は，USBメモリで発行しますので，カラー（写真）の使用も可です．
+ただし，白黒印刷をして利用することも考えられますので，
+白黒印刷でも内容の把握が可能であるようご配慮ください．
+
+
+\section{論文投稿方法について}
+
+原稿はPDFファイルでご用意下さい．
+論文原稿は発表申込専用サイトで受け付けます(SITA2017ホームページ
+http://www.ieice.org/ess/sita/SITA2017/
+よりリンクが張ってあります)．
+
+論文投稿システムに関するお問合せは，
+\begin{center}
+\tt sita-2017-submit@mail.ieice.org
+\end{center}
+までお願い致します．
+
+\subsection{注意事項}
+原稿が指定の様式を満たしていることを確認して下さい．
+なるべく複数のシステムでPDF原稿が閲覧・印刷できることを確認しておくと確実です．
+
+% 「参考文献」と書いてあるのが気に入らない場合以下の行を有効にしてください
+% 以下の行は LaTeX2e では有効ですが，LaTeX 2.09では無効です。
+\renewcommand{\refname}{文献}
+
+\begin{thebibliography}{99}
+\bibitem{sita2016}
+SITA2016 Secretariat, 
+``How to write a SITA2016 manuscript,'' 
+The 39th Symposium on Information Theory and its Applications, 2016.
+\end{thebibliography}
+
+\end{document}
+
+% end of file

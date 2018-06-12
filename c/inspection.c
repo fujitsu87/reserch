@@ -16,6 +16,28 @@ double culc_complex_mse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * 
 	return ans;
 }
 
+//etaと(h_h-h)^2の平均2乗誤差(MSE)を出力
+double culc_mse_eta_h()
+{
+	int num = N*K;
+	int i,j;
+	double ans = 0,tmp;
+	double h_mse,eta_val;
+	for (i = 0; i < N; ++i)
+	{
+		for (j = 0; j < K; ++j)
+		{
+			h_mse = gsl_complex_abs2(gsl_complex_sub(gsl_matrix_complex_get(h,i,j),gsl_matrix_complex_get(h_h,i,j)));
+			eta_val = gsl_matrix_get(eta,i,j);
+			tmp = h_mse - eta_val;
+			tmp = tmp*tmp;
+			ans += tmp;
+		}
+	}
+	ans = ans/num;
+	return ans;
+}
+
 //Aの平均を計算
 double culc_avr(int n,int m,gsl_matrix * A)
 {
@@ -33,19 +55,6 @@ double culc_avr(int n,int m,gsl_matrix * A)
 	return ans;
 }
 
-//Aの平均を計算
-void tmp_set_eta(int n,int m,double init_num)
-{
-	int i,j;
-	for (i = 0; i < n; ++i)
-	{
-		for (j = 0; j < m; ++j)
-		{
-			gsl_matrix_set(eta,i,j,init_num);
-		}
-	}
-	return;
-}
 //AとBの平均2乗誤差(MSE)を出力 自セル
 double culc_complex_mse_etc(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * B,int jstart)
 {
