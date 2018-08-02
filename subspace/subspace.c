@@ -5,33 +5,17 @@
 #include <string.h>
 #include "../include/matrix.c"
 #include "../include/random_number.c"
-#include "../include/blas.c"
+#include "../include/blas.c" 
 #include "../include/complex.c"
 #include "Hadamard.c"
 #include "../include/interleaver.c"
 #include "init_functions.c"
-#include "interference_functions.c"
-#include "channel_functions.c"
-#include "data_functions.c"
 #include "inspection.c"
 #include "svd_subspace.c"
 #include <sys/stat.h>
 #include <sys/types.h>
 
-//----------------絶対値の2乗の行列を計算-------------------------------
-void abs2_matrix(gsl_matrix_complex *x, gsl_matrix *y,int s1,int s2)
-{
-    int i,j;
-    for (i = 0; i < s1; ++i)
-    {
-        for (j = 0; j < s2; ++j)
-        {
-            double tmp = gsl_complex_abs2(gsl_matrix_complex_get(x,i,j));
-            gsl_matrix_set(y,i,j,tmp);
 
-        }
-    }
-}
 //------------------終了処理-----------------------------------------
 void finish()
 {
@@ -43,15 +27,8 @@ void finish()
     z = GSLMatrixFree(z); 
 
     x_h = GSLMatrixFree(x_h);
-    x_h_abs2 = GSLRealMatrixFree(x_h_abs2); 
-    xi = GSLRealMatrixFree(xi);
-    x_b = GSLMatrixFree(x_b);
-    xi_b = GSLRealMatrixFree(xi_b);
+
     h_h = GSLMatrixFree(h_h);
-    h_h_abs2 = GSLRealMatrixFree(h_h_abs2);
-    eta = GSLRealMatrixFree(eta);
-    I_b = GSLMatrixFree(I_b);
-    zeta = GSLRealMatrixFree(zeta);
 
     pilot =  GSLRealMatrixFree(pilot);
 
@@ -144,38 +121,27 @@ int main(int argc, char *argv[])
 	    GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
 	    gsl_matrix_complex_scale(h_sub,tmp1);
         // fprintf(stdout, "\n\n---h_sub---\n");
-        // PrintMatrix(stdout, K/2, K/2, h_sub);
+        // PrintMatrix(stdout, K/2, K, h_sub);
 
         //h_subの真値を計算
-        gsl_matrix_complex *h_my = gsl_matrix_complex_alloc(N,K/2);
-        for(i = 0; i < N; ++i)
-            for(j = 0; j < K/2; ++j)
-                 gsl_matrix_complex_set (h_my, i, j,gsl_matrix_complex_get (h, i, j));
-	    AHB(s,h_my,h_sub_true);
+	    AHB(s,h,h_sub_true);
         GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
 	    gsl_matrix_complex_scale(h_sub_true,tmp1);
         // fprintf(stdout, "\n\n---h_sub_true---\n");
         // PrintMatrix(stdout, K/2, K/2, h_sub_true);
 
-        h_my =  GSLMatrixFree(h_my);
-        // printf("mse = %g\n",culc_complex_mse(K/2,K/2,h_sub,h_sub_true));
+
+        // printf("mse = %g\n",culc_complex_mse(K/2,K,h_sub,h_sub_true));
         //データ推定
         
         // //データ書き込み
-        mse_result = mse_result + culc_complex_mse(K/2,K/2,h_sub,h_sub_true);
+        mse_result = mse_result + culc_complex_mse(K/2,K,h_sub,h_sub_true);
 
-        // finish();
+        finish();
     }
     fprintf(fp_sn_mes,"%lf %lf\n",Pk/N0,mse_result/ENSEMBLE);
     end = clock();
 
-    //MSEとBER分散と標準偏差を求める
-
-    // fclose(fp_mse_h);
-    // fclose(fp_mse_h_my);
-    // fclose(fp_mse_h_other);
-    // fclose(fp_bit_err);
-    // fclose(fp_x);
     fclose(fp_sn_mes);
     free(mse_h_n);
     free(bit_err_n); 

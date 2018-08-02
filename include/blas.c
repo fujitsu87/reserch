@@ -162,7 +162,7 @@ void HermitianABH(gsl_matrix_complex *A,gsl_matrix_complex *B,gsl_matrix_complex
 	gsl_complex z;
 	gsl_matrix_complex *BH=gsl_matrix_complex_calloc(B->size2,B->size1);
 	//FILE *fp=fopen("process.dat","w");
-	ConjugateTranspose(B,BH);
+	//ConjugateTranspose(B,BH);
 	//PrintMatrix(fp,BH->size1,BH->size2,BH);
 	//AB(A,BH,C);
 	gsl_blas_zhemm(CblasLeft,CblasLower,UNIT,A,BH,ZERO,C);

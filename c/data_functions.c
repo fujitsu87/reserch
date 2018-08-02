@@ -249,10 +249,10 @@ void data_estimation(FILE *fp_x)
    
     culc_xi_b();
     culc_x_b();
-
     culc_x_h();
     culc_xi();
 
+    // PrintMatrix(stdout,K,T,x_b);
     // output_estimatedata(fp_x);
-
+    // PrintMatrix(stdout,N,T,z);
 }

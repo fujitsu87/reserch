@@ -115,6 +115,7 @@ void PrintMatrixV(unsigned int m,unsigned int n,struct LIST *v_neighbor[n]){
       p=v_neighbor[i];
       while(p!=NULL){
             ldm[p->INDEX][i]=1;
+
             p=p->NEXT;
           }
     }
@@ -150,5 +151,38 @@ void PrintMatrixC(unsigned int m,unsigned int n,struct LIST *c_neighbor[m]){
 
       IMatrixFree(ldm);
 }
+void fPrintMatrixV(unsigned int m,unsigned int n,struct LIST *v_neighbor[n],FILE *file_pt){
+    int i,j;
+        int **ldm;
+  struct LIST *p;
 
+    ldm=IMatrix(m,n,ldm);
+
+    for(i=0;i<n;i++){
+      p=v_neighbor[i];
+       fprintf(file_pt,"%d ",i);
+      while(p!=NULL){
+            ldm[p->INDEX][i]=1;
+            fprintf(file_pt,"%d ",p->INDEX);
+            p=p->NEXT;
+          }
+           fprintf(file_pt,"\n");
+    }
+
+
+    IMatrixFree(ldm);
+
+}
+void ShowList(struct LIST *neighbor){
+  struct LIST *p;
+
+  p=neighbor;
+  while(p!=NULL){
+    printf("%d ",p->INDEX);
+    p=p->NEXT;
+  }
+  printf("\n");
+
+
+}
 #endif

@@ -2,29 +2,29 @@
 #define __CONFIG_C__
 
 //基地局のアンテナの数
-#define N 128
+#define N 32
 //ユーザ数
-#define K 32
+#define K 40
 //離散時間ステップ数
 #define T 128
 //pilot信号時間長さ(必ずTP>Kにする)
-#define Tp 32
+#define Tp 40
 //隣接基地局数
 #define DK 2
 //アンサンブル平均回数
 #define ENSEMBLE 1
 
 //反復回数 おおまわり
-#define BIG_LOOP 10
+#define BIG_LOOP 20
 //反復回数　小さいループ
-#define H_LOOP 10
-#define X_LOOP 10
+#define H_LOOP 15
+#define X_LOOP 15
 
 //電力
 const double Pk = 1.0;
 
 //pilotの置き方　0...shift 1...sync 2...contamination
-const int Pilot_flg = 0;
+const int Pilot_flg = 1;
 
 //ノイズ
 double N0;
@@ -35,8 +35,8 @@ double a_k;
 int Repeat_flg = 1;
 
 //ダンピング係数
-double a_x= 0.5;
-double a_h= 0.5;
+double a_x= 1.0;
+double a_h= 1.0;
 
 //セル間電力差
 double cell_diff = 1.0;

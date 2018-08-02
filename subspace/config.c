@@ -2,7 +2,7 @@
 #define __CONFIG_C__
 
 //基地局のアンテナの数
-#define N 256
+#define N 128
 //ユーザ数
 #define K 32
 //離散時間ステップ数
@@ -24,7 +24,7 @@
 const double Pk = 1.0;
 
 //pilotの置き方　0...shift 1...sync 2...contamination
-const int Pilot_flg = 2;
+const int Pilot_flg = 0;
 
 //ノイズ
 double N0;
@@ -49,15 +49,10 @@ gsl_matrix_complex* y;
 gsl_matrix_complex* z;
 
 gsl_matrix_complex* x_h;
-gsl_matrix* x_h_abs2;
-gsl_matrix* xi;
-gsl_matrix_complex* x_b;
-gsl_matrix* xi_b;
+
 gsl_matrix_complex* h_h;
-gsl_matrix* h_h_abs2;
+
 gsl_matrix* eta;
-gsl_matrix_complex* I_b;
-gsl_matrix* zeta;
 
 gsl_matrix* pilot;
 

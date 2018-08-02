@@ -1,0 +1,194 @@
+#include<stdio.h>
+#include<stdlib.h>
+#include<math.h>
+#include<complex.h>
+
+#include"../../../include/random_number.c"
+#include"../../../include/complex.c"
+#include"../../../include/vector.c"
+#include"../../../include/matrix.c"
+
+#include"../include/modulation.c"
+#include"../include/channel.c"
+#include"../include/channel_estimation.c"
+#include"../include/data_estimation.c"
+
+int M,N,T,Tp;
+double sigma,sigma2,dB; 
+
+void AMP(int iter_c,int iter_d,int iter,complex **Y,complex **H,complex **X,
+	 double **mse,double **ber)
+{
+  int i,j,m,n,t;
+  double **Vx,**Vh,**zeta_c,**zeta_d,**mse_tmp,**ber_tmp,mse0,ber0;
+  complex **H_es,**X_es,**X_es_pre,**Z_c,**Z_d;
+
+  X_es = CPMatrixAlloc(0,N-1,0,T-1);
+  X_es_pre = CPMatrixAlloc(0,N-1,0,T-1);
+  Vx = DMatrixAlloc(0,N-1,0,T-1);
+  H_es = CPMatrixAlloc(0,M-1,0,N-1);
+  Vh = DMatrixAlloc(0,M-1,0,N-1);
+  Z_c = CPMatrixAlloc(0,M-1,0,T-1);
+  zeta_c = DMatrixAlloc(0,M-1,0,T-1);
+  Z_d = CPMatrixAlloc(0,M-1,0,T-1);
+  zeta_d = DMatrixAlloc(0,M-1,0,T-1);
+  mse_tmp = DMatrixAlloc(0,iter-1,0,iter_c-1);
+  ber_tmp = DMatrixAlloc(0,iter-1,0,iter_d-1);
+
+  for(i=0;i<iter;i++) {
+    for(j=0;j<iter_c;j++) mse_tmp[i][j] = 0.0;
+    for(j=0;j<iter_d;j++) ber_tmp[i][j] = 0.0;
+  }
+
+  for(n=0;n<N;n++) {
+    for(t=0;t<Tp;t++) {
+      X_es[n][t] = X_es_pre[n][t] = X[n][t];
+      Vx[n][t] = 0.0;
+    }
+    for(t=Tp;t<T;t++) {
+      X_es[n][t] = X_es_pre[n][t] = 0.0;
+      Vx[n][t] = 1.0;
+    }
+  }
+
+  for(m=0;m<M;m++) {
+    for(n=0;n<N;n++) {
+      H_es[m][n] = 0.0;
+      Vh[m][n] = 1.0/(double)M;
+    }
+  }
+
+  for(m=0;m<M;m++) {
+    for(t=0;t<T;t++) {
+      Z_c[m][t] = Z_d[m][t] = 0.0;
+      zeta_c[m][t] = zeta_d[m][t] = sigma2;
+    }
+  }
+
+  for(i=0;i<iter;i++) {
+    for(m=0;m<M;m++) {
+      Channel_Estimation(m,iter_c,Y,H_es,Vh,Z_c,zeta_c,
+			 X_es,Vx,Z_d,zeta_d,H,mse_tmp[i]);
+    }
+
+    for(t=Tp;t<T;t++) {
+      Data_Estimation(t,iter_d,Y,X_es,Vx,Z_d,zeta_d,H_es,Vh,Z_c,zeta_c,
+		      X,ber_tmp[i]);
+    }
+
+    if(Termination(X_es,X_es_pre)!=0) {
+      mse0 = mse_tmp[i][iter_c-1]; ber0 = ber_tmp[i][iter_d-1];
+      for(i++;i<iter;i++) {
+	for(j=0;j<iter_c;j++) mse_tmp[i][j] = mse0;
+	for(j=0;j<iter_d;j++) ber_tmp[i][j] = ber0;
+      }
+    }
+    else {
+      for(n=0;n<N;n++) {
+	for(t=0;t<T;t++) X_es_pre[n][t] = X_es[n][t];
+      }
+    }
+  }
+
+  for(i=0;i<iter;i++) {
+    for(j=0;j<iter_c;j++) {
+      if(mse_tmp[i][j]>1.0) mse[i][j] += 1.0;
+      else mse[i][j] += mse_tmp[i][j];
+    }
+    for(j=0;j<iter_d;j++) ber[i][j] += ber_tmp[i][j];
+  }
+
+  X_es = CPMatrixFree(X_es,0,N-1,0,T-1);
+  X_es_pre = CPMatrixFree(X_es_pre,0,N-1,0,T-1);
+  Vx = DMatrixFree(Vx,0,N-1,0,T-1);
+  H_es = CPMatrixFree(H_es,0,M-1,0,N-1);
+  Vh = DMatrixFree(Vh,0,M-1,0,N-1);
+  Z_c = CPMatrixFree(Z_c,0,M-1,0,T-1);
+  zeta_c = DMatrixFree(zeta_c,0,M-1,0,T-1);
+  Z_d = CPMatrixFree(Z_d,0,M-1,0,T-1);
+  zeta_d = DMatrixFree(zeta_d,0,M-1,0,T-1);
+  mse_tmp = DMatrixFree(mse_tmp,0,iter-1,0,iter_c-1);
+  ber_tmp = DMatrixFree(ber_tmp,0,iter-1,0,iter_d-1);
+}
+
+void Simulation(FILE *fp[2],int num,int iter_c,int iter_d,int iter)
+{
+  int i,j;
+  complex **Y,**H,**X;
+  double **mse,**ber;
+
+  Y = CPMatrixAlloc(0,M-1,0,T-1);
+  H = CPMatrixAlloc(0,M-1,0,N-1);
+  X = CPMatrixAlloc(0,N-1,0,T-1);
+  mse = DMatrixAlloc(0,iter-1,0,iter_c-1);
+  ber = DMatrixAlloc(0,iter-1,0,iter_d-1);
+
+  for(i=0;i<iter;i++) {
+    for(j=0;j<iter_c;j++) mse[i][j] = 0.0;
+    for(j=0;j<iter_d;j++) ber[i][j] = 0.0;
+  }
+
+  for(i=0;i<num;i++) {
+    QPSKModulation(N,T,X);
+    ComplexGaussianMatrix(M,N,H,1.0/sqrt(M));
+    MIMOChannel(Y,H,X);
+    AMP(iter_c,iter_d,iter,Y,H,X,mse,ber);
+  }
+
+  /*
+  for(i=0;i<iter;i++) {
+    mse[i][iter_c-1] /= (double)num;
+    ber[i][iter_d-1] /= (double)num;
+    fprintf(fp,"%g %g %d %g\n",dB,ber[i][iter_d-1],i+1,mse[i][iter_c-1]);
+  }
+  */
+
+  for(i=0;i<iter;i++) {
+    for(j=0;j<iter_c;j++) {
+      mse[i][j] /= (double)num;
+      fprintf(fp[0],"%g %g %d\n",dB,mse[i][j],i*iter_c+j+1);
+    }
+  }
+
+  for(i=0;i<iter;i++) {
+    for(j=0;j<iter_d;j++) {
+      ber[i][j] /= (double)num;
+      fprintf(fp[1],"%g %g %d\n",dB,ber[i][j],i*iter_d+j+1);
+    }
+  }
+
+  Y = CPMatrixFree(Y,0,M-1,0,T-1);
+  H = CPMatrixFree(H,0,M-1,0,N-1);
+  X = CPMatrixFree(X,0,N-1,0,T-1);
+  mse = DMatrixFree(mse,0,iter-1,0,iter_c-1);
+  ber = DMatrixFree(ber,0,iter-1,0,iter_d-1);
+}
+
+int main(int argc,char**argv)
+{
+  FILE *fp[2];
+  int num,iter,iter_c,iter_d;
+
+  if(argc!=12) {
+    printf("num,iter_c,iter_d,iter,M,N,T,Tp,dB,file1,file2\n");
+    exit(1);
+  }
+  num = atoi(argv[1]);
+  iter_c = atoi(argv[2]);
+  iter_d = atoi(argv[3]);
+  iter = atoi(argv[4]);
+  M = atoi(argv[5]);
+  N = atoi(argv[6]);
+  T = atoi(argv[7]);
+  Tp = atoi(argv[8]);
+  dB = atof(argv[9]);
+  fp[0] =fopen(argv[10],"w");
+  fp[1] =fopen(argv[11],"w");
+
+  sigma = pow(10.0,-dB/20.0);
+  sigma2 = sigma*sigma;
+
+  RandomNumberInitialization(0);
+
+  Simulation(fp,num,iter_c,iter_d,iter);
+}

@@ -111,7 +111,7 @@ int main(int argc, char *argv[])
 
 
     //乱数初期化
-    RandomNumberInitialization(0);
+    RandomNumberInitialization(4);
    
     N0 = Pk/atof(argv[1]);
     sprintf(output_path,"./data/%s/",argv[2]);
@@ -192,6 +192,7 @@ int main(int argc, char *argv[])
                 mse_h_n_other[count_h] += culc_complex_mse_etc(N,K,h,h_h,K/DK)/(double)ENSEMBLE;
                 ++count_h;
                 abs2_matrix(h_h,h_h_abs2,N,K);
+                printf("%d %g\n",j,culc_complex_mse(N,K,h,h_h));
 // printf("eta vs h h_h %f\n",culc_mse_eta_h());
                 // printf("%f\n",culc_complex_mse(N,K,h,h_h));
             
@@ -232,7 +233,7 @@ int main(int argc, char *argv[])
                 bit_err_n_other[count_x] += culc_bit_error_rate(fp_bit_err,K/DK,K)/(double)ENSEMBLE;
                 ++count_x;
                 abs2_matrix(x_h,x_h_abs2,K,T);
-
+                printf("BER %d %f\n",i,culc_bit_error_rate(fp_bit_err,0,K));
                 // I_b_n[count_all] += culc_abs2_all_element(N,T,I_b)/(double)ENSEMBLE;
                 // zeta_n[count_all] += culc_abs2_all_element(N,T,z)/(double)ENSEMBLE;
                 ++count_all;

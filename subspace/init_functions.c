@@ -283,73 +283,6 @@ void init_user_p()
 
 }
 
-void init_xi_tmp()
-{
-	int i,j;
-	for (i = 0; i < K; ++i)
-	{
-		for (j = 0; j < T; ++j)
-		{
-			double tmp[2] = {Pk,0.0};
-			int index = (int)gsl_matrix_get(pilot,i,j);
-			// if(j >= Tp && j < (T-Tp) && Pilot_flg==0)index = 1;
-			// else if(Pilot_flg==1)index = 1;
-			gsl_matrix_set(xi ,i,j,0.5);
-			// gsl_matrix_set(xi ,i,j,Pk);
-			gsl_matrix_set(xi_b ,i,j,Pk);
-		}
-	}
-	// PrintRealMatrix(stdout,K,T,xi);
-}
-
-void init_xi_first()
-{
-	int i,j;
-	for (i = 0; i < K; ++i)
-	{
-		for (j = 0; j < T; ++j)
-		{
-			double tmp[2] = {Pk,0.0};
-			int index = (int)gsl_matrix_get(pilot,i,j);
-			if(j >= Tp && j < (T-Tp) && Pilot_flg==0)index = 1;
-			else if(Pilot_flg==1)index = 1;
-			gsl_matrix_set(xi ,i,j,tmp[index]);
-			// gsl_matrix_set(xi ,i,j,Pk);
-			gsl_matrix_set(xi_b ,i,j,Pk);
-			// gsl_matrix_set(xi ,i,j,tmp[index]);
-		}
-	}
-	// PrintRealMatrix(stdout,K,T,xi);
-}
-void init_xi()
-{
-	int i,j;
-	for (i = 0; i < K; ++i)
-	{
-		for (j = 0; j < T; ++j)
-		{
-			double tmp[2] = {Pk,0.0};
-			int index = (int)gsl_matrix_get(pilot,i,j);
-			// if(j >= Tp && j < (T-Tp))index = 1;
-			gsl_matrix_set(xi ,i,j,tmp[index]);
-			// gsl_matrix_set(xi ,i,j,Pk);
-			gsl_matrix_set(xi_b ,i,j,Pk);
-		}
-	}
-	// PrintRealMatrix(stdout,K,T,xi);
-}
-
-void init_eta()
-{
-	int i,j;
-	for (i = 0; i < N; ++i)
-	{
-		for (j = 0; j < K; ++j)
-		{
-			gsl_matrix_set(eta ,i,j,1);
-		}
-	}
-}
 
 void init_x_h()
 {
@@ -364,59 +297,16 @@ void init_x_h()
 			if(gsl_matrix_get(pilot,k,t) == 1)
 			{
 				gsl_matrix_complex_set(x_h,k,t,gsl_matrix_complex_get(x,k,t));
-				gsl_matrix_complex_set(x_b,k,t,gsl_matrix_complex_get(x,k,t));
+				
 			}
 			else 
 			{
 				gsl_matrix_complex_set(x_h,k,t,def);
-				gsl_matrix_complex_set(x_b,k,t,def);
 			}
 		}
 	}
 }
 
-void init_x_h_tmp()
-{
-	int k,t,n;
-	gsl_complex def,z;
-	def.dat[0] = 0;
-	def.dat[1] = 0;
-
-	gsl_matrix_complex *HH = gsl_matrix_complex_calloc(K,N);
-	gsl_matrix_complex_transpose_memcpy(HH,h);
-	for(k=0;k<K;k++){
-		for(n=0;n<N;n++){
-			if(gsl_matrix_get(pilot,k,t) == 1)
-			{
-				z=gsl_matrix_complex_get(HH,k,n);
-				z=gsl_complex_conjugate(z);
-				z=gsl_complex_mul_real(z,1/sqrt(N));
-				gsl_matrix_complex_set(HH,k,n,z);
-			}
-		}
-	}
-
-	AB(HH,y,x_b);
-
-	for (k = 0; k < K; ++k)
-	{
-		for (t = 0; t < T; ++t)
-		{
-			if(gsl_matrix_get(pilot,k,t) == 1)
-			{
-				gsl_matrix_complex_set(x_h,k,t,gsl_matrix_complex_get(x,k,t));
-				gsl_matrix_complex_set(x_b,k,t,gsl_matrix_complex_get(x,k,t));
-			}
-			else 
-			{
-
-				gsl_matrix_complex_set(x_h,k,t,def);
-				// gsl_matrix_complex_set(x_b,k,t,def);
-			}
-		}
-	}
-	HH=GSLMatrixFree(HH);
-}
 
 void init(double sn)
 {
@@ -431,22 +321,15 @@ void init(double sn)
 	z = gsl_matrix_complex_calloc(N,T);
 
 	x_h = gsl_matrix_complex_calloc(K,T);
-	x_h_abs2 = gsl_matrix_calloc(K,T);
-	xi = gsl_matrix_calloc(K,T);
-	x_b = gsl_matrix_complex_calloc(K,T);
-	xi_b = gsl_matrix_calloc(K,T);
+
 	h_h = gsl_matrix_complex_calloc(N,K);
-	h_h_abs2 = gsl_matrix_calloc(N,K);
-	eta = gsl_matrix_calloc(N,K);
-	I_b = gsl_matrix_complex_calloc(N,T);
-	zeta = gsl_matrix_calloc(N,T);
 
 	pilot = gsl_matrix_calloc(K,T);
 
 	s = gsl_matrix_complex_alloc(N, K/2);
 	y_sub = gsl_matrix_complex_alloc(K/2, T);
 	h_sub = gsl_matrix_complex_alloc(K/2, K);
-	h_sub_true = gsl_matrix_complex_alloc(K/2, K/2);
+	h_sub_true = gsl_matrix_complex_alloc(K/2, K);
 
 	user_p  = (double *)malloc( sizeof(double) *K );
 
@@ -474,18 +357,6 @@ void init(double sn)
 	gsl_matrix_complex_scale(y,tmp1);
 	gsl_matrix_complex_add(y,w);
 
-	// PrintMatrix(stdout,N,K,h);
-	// PrintMatrix(stdout,K,T,x);
-	// PrintMatrix(stdout,N,T,w);
-	// PrintMatrix(stdout,N,T,y);
-
 	init_x_h();
-	// init xi
-	init_xi();
-	//init eta
-	init_eta();
-
-	// PrintMatrix(stdout,K,T,x);
-	// PrintMatrix(stdout,K,T,x_h);
 
 }

@@ -14,7 +14,7 @@ void culc_eta()
                 tmp2 += gsl_matrix_get(x_h_abs2,k,t)/(N0+ gsl_matrix_get(zeta,n,t));
             }
             tmp1 = 1 + tmp2/(double)N;
-
+            // printf("%g\n",1/tmp1);
             gsl_matrix_set(eta,n,k,1/tmp1);
         }
     }
@@ -65,7 +65,7 @@ void culc_h_h()
                         );
                 sec1.dat[0] += tmp1.dat[0];
                 sec1.dat[1] += tmp1.dat[1];
-            
+
                 //第3項の計算
                 GSL_SET_COMPLEX(&tmp2,0,0);
                 
@@ -105,7 +105,7 @@ void culc_h_h()
                     gsl_matrix_complex_get(h_h,n,k)
                     ,(1-gsl_matrix_get(eta,n,k))
                 );
-
+// printf("z * x_h_conju = %g %g\n",sec1.dat[0],sec1.dat[1]);
             // sum(xi*|z|^2)*h_h
             sec3 = gsl_complex_mul_real(
                             gsl_matrix_complex_get(h_h,n,k)
@@ -123,7 +123,6 @@ void culc_h_h()
                         +a_h*tmp3.dat[0];
             tmp3.dat[1] = (1.0 - a_h)*GSL_IMAG(gsl_matrix_complex_get(h_h,n,k))
                         +a_h*tmp3.dat[1];
-
             gsl_matrix_complex_set(h_h,n,k,tmp3);
         }
     }
@@ -143,6 +142,5 @@ void channel_estimation(FILE *fp_x)
 
     // gsl_matrix_set_zero(eta);
     // gsl_matrix_complex_memcpy(h_h,h);
- 
-    // PrintMatrix(stdout,N,K,h_h);
+    // PrintRealMatrix(stdout,N,K,eta);
 }
