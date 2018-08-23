@@ -1,0 +1,12 @@
+set logscale y
+set xlabel "n"
+set ylabel "MSE"
+plot "mse_h_N1_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=1"
+replot "mse_h_N2_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=2"
+replot "mse_h_N4_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=4"
+replot "mse_h_N8_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=8"
+replot "mse_h_N16_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=16"
+replot "mse_h_N32_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=32"
+replot "mse_h_N64_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=64"
+replot "mse_h_N128_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=128"
+replot "mse_h_N256_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=256"

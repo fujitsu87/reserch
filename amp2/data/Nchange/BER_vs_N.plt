@@ -1,0 +1,12 @@
+set logscale y
+set xlabel "n"
+set ylabel "BER"
+plot "bit_err_N1_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=1"
+replot "bit_err_N2_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=2"
+replot "bit_err_N4_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=4"
+replot "bit_err_N8_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=8"
+replot "bit_err_N16_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=16"
+replot "bit_err_N32_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=32"
+replot "bit_err_N64_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=64"
+replot "bit_err_N128_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=128"
+replot "bit_err_N256_K32_T128_Tp32_SN10.dat" w lp linewidth 1 title "N=256"
