@@ -93,7 +93,7 @@ gsl_complex SoftDecision(gsl_complex x_es,double v)
   return ans;
 }
 //------------------データ推定器----------------------------------
-void data_estimation(FILE *fp_x,int t,double *ber)
+void data_estimation(FILE *fp_x,int t,double *ber,int loop)
 {
     int n,k,i;
     double a;
@@ -115,57 +115,46 @@ void data_estimation(FILE *fp_x,int t,double *ber)
         ); 
     }
     gsl_matrix_complex_memcpy(H_es_pre,h_h);
-    for(i=0;i<X_LOOP;i++) {
-        for(n=0;n<N;n++) {
-            gsl_complex z = Computation_z(n,t,X_es_pre,H_es_pre);
-            gsl_matrix_complex_set(z_d,n,t,z);
-            double zeta = Computation_zeta(n,t); 
-            gsl_matrix_set(zeta_d,n,t,zeta);
-        }
-        for(k=0;k<K;k++) {
-            if(gsl_matrix_get(pilot,k,t) == 0){
-                gsl_matrix_set(
-                    xi,k,t,
-                    Computation_Vx(k,t)
-                );
-                gsl_matrix_complex_set(
-                    x_h,k,t,
-                    Computation_X_es(k,t,X_es_pre)
-                );
-            }
-        }
-        for(k=0;k<K;k++) {
-            if(gsl_matrix_get(pilot,k,t) == 0){
-                gsl_complex pre = gsl_vector_complex_get(x_es_pre,k);
-                gsl_complex z = SoftDecision(
-                    gsl_matrix_complex_get(x_h,k,t),gsl_matrix_get(xi,k,t)
-                    );
-                // gsl_matrix_complex_set(
-                //     x_h,k,t,
-                //     SoftDecision(gsl_matrix_complex_get(x_h,k,t),gsl_matrix_get(xi,k,t)
-                //     )
-                // );
-                gsl_complex ans;
-                ans.dat[0] = (1.0 - a_x)*pre.dat[0] + a_x*z.dat[0];
-                ans.dat[1] = (1.0 - a_x)*pre.dat[1] + a_x*z.dat[1];
-                gsl_matrix_complex_set(x_h,k,t,ans);
-                gsl_matrix_set(
-                    xi,k,t,1.0 - gsl_complex_abs2(z)
-                );
-            }
-        }
-        a = BER(t);
-        ber[i] += a;
-        for(k=0;k<K;k++){
-            if(gsl_matrix_get(pilot,k,t) == 0){
-                gsl_vector_complex_set(
-                    x_es_pre,
-                    k,
-                    gsl_matrix_complex_get(x_h,k,t)
-                );
-            }
-        }  
+    for(n=0;n<N;n++) {
+        gsl_complex z = Computation_z(n,t,x_h,h_h);
+        gsl_matrix_complex_set(z_d,n,t,z);
+        double zeta = Computation_zeta(n,t); 
+        gsl_matrix_set(zeta_d,n,t,zeta);
     }
+    for(k=0;k<K;k++) {
+        if(gsl_matrix_get(pilot,k,t) == 0){
+            gsl_matrix_set(
+                xi,k,t,
+                Computation_Vx(k,t)
+            );
+            gsl_matrix_complex_set(
+                x_h,k,t,
+                Computation_X_es(k,t,x_h)
+            );
+        }
+    }
+    for(k=0;k<K;k++) {
+        if(gsl_matrix_get(pilot,k,t) == 0){
+            gsl_complex pre = gsl_vector_complex_get(x_es_pre,k);
+            gsl_complex z = SoftDecision(
+                gsl_matrix_complex_get(x_h,k,t),gsl_matrix_get(xi,k,t)
+                );
+            // gsl_matrix_complex_set(
+            //     x_h,k,t,
+            //     SoftDecision(gsl_matrix_complex_get(x_h,k,t),gsl_matrix_get(xi,k,t)
+            //     )
+            // );
+            gsl_complex ans;
+            ans.dat[0] = (1.0 - a_x)*pre.dat[0] + a_x*z.dat[0];
+            ans.dat[1] = (1.0 - a_x)*pre.dat[1] + a_x*z.dat[1];
+            gsl_matrix_complex_set(x_h,k,t,ans);
+            gsl_matrix_set(
+                xi,k,t,1.0 - gsl_complex_abs2(z)
+            );
+        }
+    }
+    a = BER(t);
+    ber[loop] += a;
     X_es_pre = GSLMatrixFree(X_es_pre);
     H_es_pre = GSLMatrixFree(H_es_pre);
     x_es_pre = GSLVectorFree(x_es_pre);

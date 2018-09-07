@@ -5,13 +5,17 @@
 #include <string.h>
 #include "../include/matrix.c"
 #include "../include/random_number.c"
+#include "../include/inverse.c" 
 #include "../include/blas.c" 
 #include "../include/complex.c"
+#include "../include/vector.c"
 #include "Hadamard.c"
 #include "../include/interleaver.c"
 #include "init_functions.c"
 #include "inspection.c"
 #include "svd_subspace.c"
+#include "lmmse.c"
+#include "wu.c"
 #include <sys/stat.h>
 #include <sys/types.h>
 
@@ -24,9 +28,10 @@ void finish()
     h = GSLMatrixFree(h); 
     w = GSLMatrixFree(w); 
 
-    z = GSLMatrixFree(z); 
+    Z = GSLVectorFree(Z);
 
     x_h = GSLMatrixFree(x_h);
+    x_h_sub = GSLMatrixFree(x_h_sub);
 
     h_h = GSLMatrixFree(h_h);
 
@@ -34,8 +39,24 @@ void finish()
 
     s =  GSLMatrixFree(s);
     y_sub =  GSLMatrixFree(y_sub);
+    inno = GSLVectorFree(inno);
+
     h_sub =  GSLMatrixFree(h_sub);
-    h_sub =  GSLMatrixFree(h_sub_true);
+    h_sub_true =  GSLMatrixFree(h_sub_true);
+
+    R_x =  GSLMatrixFree(R_x);
+    R_a =  GSLMatrixFree(R_a);
+
+    x_kro =  GSLMatrixFree(x_kro);
+    x_kro_conju =  GSLMatrixFree(x_kro_conju);
+
+    D =  GSLMatrixFree(D);
+    D_other =  GSLMatrixFree(D_other);
+    D_large =  GSLMatrixFree(D_large);
+    P =  GSLMatrixFree(P);
+    G =  GSLMatrixFree(G);
+    G_ans =  GSLMatrixFree(G_ans);
+    g = GSLVectorFree(g);
     free(user_p);
 }
 
@@ -114,12 +135,15 @@ int main(int argc, char *argv[])
         AHB(s,y,y_sub);
         // fprintf(stdout, "\n\n---y_sub---\n");
         // PrintMatrix(stdout, K, T, y_sub);
-
+        lmmse();
+        vec_2_mat();
+        
+        // PrintMatrix(stdout, K/2, K/2, G);
         //h_subを計算
-        ABH(y_sub,x_h,h_sub);
+        // ABH(y_sub,x_h,h_sub);
         gsl_complex tmp1;
-	    GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
-	    gsl_matrix_complex_scale(h_sub,tmp1);
+	    // GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
+	    // gsl_matrix_complex_scale(h_sub,tmp1);
         // fprintf(stdout, "\n\n---h_sub---\n");
         // PrintMatrix(stdout, K/2, K, h_sub);
 
@@ -127,16 +151,34 @@ int main(int argc, char *argv[])
 	    AHB(s,h,h_sub_true);
         GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
 	    gsl_matrix_complex_scale(h_sub_true,tmp1);
-        // fprintf(stdout, "\n\n---h_sub_true---\n");
-        // PrintMatrix(stdout, K/2, K/2, h_sub_true);
+        // PrintMatrix(stdout,K/2, K/2,h_sub_true);
 
+        for(i=Tp;i<T;i++){
+            culc_z(i);
+            culc_x_h_sub(i);
+            culc_x_kro(i);
+            culc_inno(i);
+            culc_R_a(i);
+            culc_g();
+            culc_P();
+            vec_2_mat();
+// gsl_matrix_complex_scale(G,tmp1);
+            // PrintMatrix(stdout,K/2,K/2,G);
+            // PrintMatrix(stdout,K/2, K/2,G);
+            // printf("%g\n",culc_complex_mse(K/2,K/2,G,h_sub_true));
+            AB(s,G,G_ans);
+        // PrintMatrix(stdout,N,K/2,h);
+        }
+        // printf("h = %g G = %g\n",culc_avr(N,K/2,h),culc_avr(N,K/2,G_ans));
+        // printf("%g\n",culc_complex_mse(N,K/2,G_ans,h));
+        // PrintMatrix(stdout,K/2, K/2,G);
+        // PrintMatrix(stdout,K/2, K/2,h_sub_true);
+        // PrintMatrix(stdout,K/2, T,x_h_sub);
 
-        // printf("mse = %g\n",culc_complex_mse(K/2,K,h_sub,h_sub_true));
         //データ推定
         
         // //データ書き込み
-        mse_result = mse_result + culc_complex_mse(K/2,K,h_sub,h_sub_true);
-
+        mse_result = mse_result + culc_complex_nmse(N,K/DK,h,G_ans);
         finish();
     }
     fprintf(fp_sn_mes,"%lf %lf\n",Pk/N0,mse_result/ENSEMBLE);

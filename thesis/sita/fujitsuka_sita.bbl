@@ -1,0 +1,38 @@
+\begin{thebibliography}{1}
+
+\bibitem{5gmf}
+5GMF, ``{5G Mobile Communications Systemsfor 2020 and beyond},'' Tech. Rep.
+  1.1, White Paper of 5GMF, Sep. 2017.
+
+\bibitem{Marzetta}
+T.~L. Marzetta, ``Noncooperative cellular wireless with unlimited numbers of
+  base station antennas,'' {\em IEEE trans. Wireless Commun.}, vol.~9,
+  pp.~3590--3600, Nov. 2010.
+
+\bibitem{Rusek}
+F.~Rusek, D.~Persson, B.~K. Lau, E.~G. Larsson, T.~L. Marzetta, and O.~E.~F.
+  Tufvesson, ``Scaling up mimo: Opportunities and challenges with very large
+  arrays,'' {\em IEEE Signal Process. Mag.}, vol.~30, pp.~40--60, Jan. 2013.
+
+\bibitem{Appaiah}
+K.~Appaiah, A.~Ashikhmin, and T.~L. Marzetta, ``Pilot contamination reduction
+  in multi-user tdd systems,'' {\em IEEE Int. Conf. on Commun.}, vol.~9, Nov.
+  2010.
+
+\bibitem{kabashima}
+Y.~Kabashima, F.~Krzakala, M.~M\'ezard, A.~Sakata, and L.~Zdeborov\'a, ``Phase
+  transitions and sample complexity in bayes-optimal matrix factorization,''
+  {\em IEEE Trans. Inf. Theory}, vol.~62, Jul. 2016.
+
+\bibitem{Donoho}
+D.~L. Donoho, A.~Maleki, and A.~Montanari, ``Message passing algorithms for
+  compressed sensing,'' {\em Proc. Nat. Acad. Sci. USA}, vol.~106, no.~45,
+  p.~18914–18919, 2009.
+
+\bibitem{vila}
+J.~Vila, P.~Schniter, S.~Rangan, F.~Krzakala, and L.~Zdeborová, ``Adaptive
+  damping and mean removal for the generalized approximate message passing
+  algorithm,'' {\em in Proc. IEEE Int. Conf. Acoust., Speech Signal Process.
+  (ICASSP)}, pp.~2021--2025, Apr. 2015.
+
+\end{thebibliography}

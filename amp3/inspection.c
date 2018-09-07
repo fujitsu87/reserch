@@ -282,13 +282,13 @@ double BER(int t)
 }
 
 
-void create_plotfile(char *outputpath)
+void create_plotfile(char *outputpath,double sn)
 {
 	FILE *fp_mse_plt,*fp_ber_plt;
 	char mse_h_plt[100];
 	char ber_plt[100];
-	sprintf(ber_plt,"%sber_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,Pk/N0);
-	sprintf(mse_h_plt,"%smse_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,Pk/N0);
+	sprintf(ber_plt,"%sber_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,sn);
+	sprintf(mse_h_plt,"%smse_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,sn);
 	
 	if ((fp_mse_plt = fopen(mse_h_plt, "w")) == NULL) {
         printf("can not open%s\n",mse_h_plt);
@@ -302,16 +302,16 @@ void create_plotfile(char *outputpath)
 	fprintf(fp_ber_plt,"set logscale y\n");
 	fprintf(fp_ber_plt,"set xlabel \"n\"\n");
 	fprintf(fp_ber_plt,"set ylabel \"BER\"\n");
-	fprintf(fp_ber_plt,"plot \"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_ber_plt,"replot \"bit_err_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_ber_plt,"replot \"bit_err_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_ber_plt,"plot \"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,sn);
+	fprintf(fp_ber_plt,"replot \"bit_err_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,sn);
+	fprintf(fp_ber_plt,"replot \"bit_err_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,sn);
 
 	fprintf(fp_mse_plt,"set logscale y\n");
 	fprintf(fp_mse_plt,"set xlabel \"n\"\n");
 	fprintf(fp_mse_plt,"set ylabel \"MSE\"\n");
-	fprintf(fp_mse_plt,"plot \"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_mse_plt,"replot \"mse_h_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,Pk/N0);
-	fprintf(fp_mse_plt,"replot \"mse_h_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_mse_plt,"plot \"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,sn);
+	fprintf(fp_mse_plt,"replot \"mse_h_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,sn);
+	fprintf(fp_mse_plt,"replot \"mse_h_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,sn);
 
 	fclose(fp_mse_plt);
 	fclose(fp_ber_plt);

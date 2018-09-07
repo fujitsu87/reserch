@@ -92,7 +92,7 @@ void culc_h_h()
             // sec3 = gsl_complex_div_real(sec3,(double)N); 
             sec3 = gsl_complex_mul(
                 sec3,
-                gsl_matrix_complex_get(h_h_pre,n,k)
+                gsl_matrix_complex_get(h_h,n,k)
             );
             sec3 = gsl_complex_mul_real(
                 sec3,
@@ -123,9 +123,9 @@ void channel_estimation(FILE *fp_x)
     int n,k,t;
     for(n=0;n<N;n++) {
         for(t=0;t<T;t++) {
-            gsl_complex z = Computation_z(n,t,x_h_pre,h_h_pre);
+            gsl_complex z = Computation_z(n,t,x_h,h_h);
             gsl_matrix_complex_set(z_c,n,t,z);
-            double zeta = Computation_zeta(n,t); 
+            double zeta = Computation_zeta(n,t);
             gsl_matrix_set(zeta_c,n,t,zeta);
         }
     }

@@ -312,7 +312,7 @@ void init(double sn)
 {
 	int i,j;
 	
-	N0 = Pk/(double)sn;
+	N0 = pow(10.0,-1.0*sn/10.0);
 	x = gsl_matrix_complex_calloc(K,T);
 	h = gsl_matrix_complex_calloc(N,K);
 	w = gsl_matrix_complex_calloc(N,T);

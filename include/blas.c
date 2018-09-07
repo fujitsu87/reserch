@@ -62,7 +62,15 @@ void AHx(gsl_matrix_complex *A,gsl_vector_complex *x,gsl_vector_complex *y){
 
 	gsl_blas_zgemv(CblasConjTrans,alpha,A,x,beta,y);
 }
+/*複素空間においてy=A^(H)xを計算する関数*/
+void ATx(gsl_matrix_complex *A,gsl_vector_complex *x,gsl_vector_complex *y){
+	gsl_complex alpha;
+	gsl_complex beta;
+	alpha=UNIT;
+	beta=ZERO;
 
+	gsl_blas_zgemv(CblasTrans,alpha,A,x,beta,y);
+}
 /*実空間において対象行列Aのy=Axを計算する関数*/
 void SymmetricAx(gsl_matrix *A,gsl_vector *x,gsl_vector *y){
 	gsl_blas_dsymv(CblasLower,1.0,A,x,0,y);
@@ -102,7 +110,7 @@ void AB(gsl_matrix_complex *A,gsl_matrix_complex *B,gsl_matrix_complex *C){
 	gsl_blas_zgemm(CblasNoTrans,CblasNoTrans,alpha,A,B,beta,C);
 }
 
-/*複素空間において複素行列の積C=A^(T)Bを計算する関数*/
+/*複素空間において複素行列の積C=A^(H)Bを計算する関数*/
 void AHB(gsl_matrix_complex *A,gsl_matrix_complex *B,gsl_matrix_complex *C){
 	gsl_complex alpha;
 	gsl_complex beta;
@@ -111,6 +119,23 @@ void AHB(gsl_matrix_complex *A,gsl_matrix_complex *B,gsl_matrix_complex *C){
 	gsl_blas_zgemm(CblasConjTrans,CblasNoTrans,alpha,A,B,beta,C);
 }
 
+/*複素空間において複素行列の積C=A^(T)Bを計算する関数*/
+void ATB(gsl_matrix_complex *A,gsl_matrix_complex *B,gsl_matrix_complex *C){
+	gsl_complex alpha;
+	gsl_complex beta;
+	alpha=UNIT;
+	beta=ZERO;
+	gsl_blas_zgemm(CblasTrans,CblasNoTrans,alpha,A,B,beta,C);
+}
+
+/*複素空間において複素行列の積C=AB^(T)を計算する関数*/
+void ABT(gsl_matrix_complex *A,gsl_matrix_complex *B,gsl_matrix_complex *C){
+	gsl_complex alpha;
+	gsl_complex beta;
+	alpha=UNIT;
+	beta=ZERO;
+	gsl_blas_zgemm(CblasNoTrans,CblasTrans,alpha,A,B,beta,C);
+}
 /*複素空間において複素行列の積C=AB^(T)を計算する関数*/
 void ABH(gsl_matrix_complex *A,gsl_matrix_complex *B,gsl_matrix_complex *C){
 	gsl_complex alpha;
@@ -147,6 +172,7 @@ void AHA(gsl_matrix_complex *A,gsl_matrix_complex *B){
 	beta=ZERO;
 	gsl_blas_zgemm(CblasConjTrans,CblasNoTrans,alpha,A,A,beta,B);
 }
+
 
 /*実空間において対象行列Aのy=AB^(T)を計算する関数*/
 void SymmetricABT(gsl_matrix *A,gsl_matrix *B,gsl_matrix *C){

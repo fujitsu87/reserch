@@ -186,7 +186,7 @@ void culc_z(int flg)
                 //eta * x_h_pre
                 gsl_complex tmp1 = gsl_complex_mul_real(
                     gsl_complex_conjugate(
-                        gsl_matrix_complex_get(x_h_pre,k,t)
+                        gsl_matrix_complex_get(x_h,k,t)
                     ),
                     gsl_matrix_get(eta,n,k)
                 );
@@ -216,7 +216,7 @@ void culc_z(int flg)
                 //h_h_pre * h_h
                 gsl_complex tmp1 = gsl_complex_mul(
                     gsl_complex_conjugate(
-                        gsl_matrix_complex_get(h_h_pre,n,k)
+                        gsl_matrix_complex_get(h_h,n,k)
                     ),
                     gsl_matrix_complex_get(h_h,n,k)
                 );

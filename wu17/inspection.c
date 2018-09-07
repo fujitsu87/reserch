@@ -12,8 +12,25 @@ double culc_complex_mse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * 
 			ans += gsl_complex_abs2(gsl_complex_sub(gsl_matrix_complex_get(A,i,j),gsl_matrix_complex_get(B,i,j)));
 		}
 	}
-	ans = ans/(double)K;
-	if(ans > 2)exit(0);
+	ans = ans/num;
+	return ans;
+}
+
+//AとBの平均2乗誤差(MSE)を出力
+double culc_complex_nmse(int n,int m,gsl_matrix_complex * A,gsl_matrix_complex * B)
+{
+	int num = n*m;
+	int i,j;
+	double ans = 0,norm = 0;
+	for (i = 0; i < n; ++i)
+	{
+		for (j = 0; j < m; ++j)
+		{
+			ans += gsl_complex_abs2(gsl_complex_sub(gsl_matrix_complex_get(A,i,j),gsl_matrix_complex_get(B,i,j)));
+			norm += gsl_complex_abs2(gsl_matrix_complex_get(A,i,j));
+		}
+	}
+	ans = ans/norm;
 	return ans;
 }
 
@@ -40,7 +57,7 @@ double culc_mse_eta_h()
 }
 
 //Aの平均を計算
-double culc_avr(int n,int m,gsl_matrix * A)
+double culc_avr(int n,int m,gsl_matrix_complex * A)
 {
 	int num = n*m;
 	int i,j;
@@ -49,7 +66,7 @@ double culc_avr(int n,int m,gsl_matrix * A)
 	{
 		for (j = 0; j < m; ++j)
 		{
-			ans += gsl_matrix_get(A,i,j);
+			ans += gsl_complex_abs(gsl_matrix_complex_get(A,i,j));
 		}
 	}
 	ans = ans/num;
@@ -109,24 +126,22 @@ double culc_bit_error_rate(FILE* fp_bit_err,int kstart,int kend)
 				double im = gsl_matrix_complex_get(x_h,k,t).dat[1];
 
 				//ゼロ符号の場合 y < -x + a_k
-				// if( (fabs(re)+fabs(im)) < a_k)
-				// {
-				// 	printf("test1");
-				// 	//本当はゼロではないとき
-				// 	if (gsl_matrix_complex_get(x,k,t).dat[0] != 0.0)
-				// 	{
-				// 		count = count +2;
-				// 	}
-				// }
-				// else{
+				if( (fabs(re)+fabs(im)) < a_k)
+				{
+					//本当はゼロではないとき
+					if (gsl_matrix_complex_get(x,k,t).dat[0] != 0.0)
+					{
+						count = count +2;
+					}
+				}
+				else{
 					//本当はゼロ符号のとき
-					// if(gsl_matrix_complex_get(x,k,t).dat[0] == 0.0)
-					// {
-					// 	printf("test2");
-					// 	count = count +2;
-					// }
-					// else
-					// { 
+					if(gsl_matrix_complex_get(x,k,t).dat[0] == 0.0)
+					{
+						count = count +2;
+					}
+					else
+					{ 
 						if(re*gsl_matrix_complex_get(x,k,t).dat[0] < 0 )
 						{
 							++count;
@@ -139,8 +154,8 @@ double culc_bit_error_rate(FILE* fp_bit_err,int kstart,int kend)
 							fprintf(fp_bit_err,"exist nan\n");
 							exit(0);
 						}
-					// }
-				// }
+					}
+				}
 				num = num + 2;
 			}
 		}
@@ -264,31 +279,13 @@ void culc_standard_deviation(double *standard_deviation,double *mse_h_n,double *
 
 }
 
-double BER(int t)
-{
-  int k;
-  double ber;
-
-  ber = 0.0;
-  for(k=0;k<K;k++) {
-	gsl_complex z1 = gsl_matrix_complex_get(x_h,k,t);
-	gsl_complex z2 = gsl_matrix_complex_get(x,k,t);
-    if(z1.dat[0]*z2.dat[0]<0.0) ber++;
-    if(z1.dat[1]*z2.dat[1]<0.0) ber++;
-  }
-  ber /= 2.0*K*(T-Tp);
-
-  return ber;
-}
-
-
-void create_plotfile(char *outputpath,double sn)
+void create_plotfile(char *outputpath)
 {
 	FILE *fp_mse_plt,*fp_ber_plt;
 	char mse_h_plt[100];
 	char ber_plt[100];
-	sprintf(ber_plt,"%sber_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,sn);
-	sprintf(mse_h_plt,"%smse_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,sn);
+	sprintf(ber_plt,"%sber_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,Pk/N0);
+	sprintf(mse_h_plt,"%smse_N%d_K%d_T%d_Tp%d_SN%.f.plt",outputpath,N,K,T,Tp,Pk/N0);
 	
 	if ((fp_mse_plt = fopen(mse_h_plt, "w")) == NULL) {
         printf("can not open%s\n",mse_h_plt);
@@ -302,16 +299,16 @@ void create_plotfile(char *outputpath,double sn)
 	fprintf(fp_ber_plt,"set logscale y\n");
 	fprintf(fp_ber_plt,"set xlabel \"n\"\n");
 	fprintf(fp_ber_plt,"set ylabel \"BER\"\n");
-	fprintf(fp_ber_plt,"plot \"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,sn);
-	fprintf(fp_ber_plt,"replot \"bit_err_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,sn);
-	fprintf(fp_ber_plt,"replot \"bit_err_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,sn);
+	fprintf(fp_ber_plt,"plot \"bit_err_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_ber_plt,"replot \"bit_err_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_ber_plt,"replot \"bit_err_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,Pk/N0);
 
 	fprintf(fp_mse_plt,"set logscale y\n");
 	fprintf(fp_mse_plt,"set xlabel \"n\"\n");
 	fprintf(fp_mse_plt,"set ylabel \"MSE\"\n");
-	fprintf(fp_mse_plt,"plot \"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,sn);
-	fprintf(fp_mse_plt,"replot \"mse_h_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,sn);
-	fprintf(fp_mse_plt,"replot \"mse_h_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,sn);
+	fprintf(fp_mse_plt,"plot \"mse_h_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"whole\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_mse_plt,"replot \"mse_h_my_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"my\"\n",N,K,T,Tp,Pk/N0);
+	fprintf(fp_mse_plt,"replot \"mse_h_other_N%d_K%d_T%d_Tp%d_SN%.f.dat\" w lp linewidth 1 title \"other\"\n",N,K,T,Tp,Pk/N0);
 
 	fclose(fp_mse_plt);
 	fclose(fp_ber_plt);

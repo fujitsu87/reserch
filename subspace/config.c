@@ -12,7 +12,7 @@
 //隣接基地局数
 #define DK 2
 //アンサンブル平均回数
-#define ENSEMBLE 100
+#define ENSEMBLE 1
 
 //反復回数 おおまわり
 #define BIG_LOOP 10

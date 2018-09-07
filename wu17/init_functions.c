@@ -2,15 +2,15 @@
 
 //--------------------------------初期化関数--------------------------------------
 
-void init_h(double s)
+void init_h()
 {
 	int n,k;
-	double sigma = 1.0;
+	double sigma = 1;
 	for (n = 0; n < N; ++n)
 	{
 		for (k = 0; k < K; ++k)
 		{
-			gsl_complex z = GSLComplexGaussianNoise(s);
+			gsl_complex z = GSLComplexGaussianNoise(sigma);
 			// GSL_SET_COMPLEX(&z,1,1);
 			gsl_matrix_complex_set(h,n,k,z);
 
@@ -155,24 +155,8 @@ void init_x()
 				}
 	
 			}
-/*			
-			//右上のpilot信号
-			else if(Pilot_flg == 0 && k < K/DK && t >= T-Tp)
-			{
-				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t-(T-Tp)),p_p*gsl_matrix_get(im_pilot,k,t-(T-Tp)));
-			}
-			//左下
-			else if(Pilot_flg == 0 && k >= 2*K/DK && t < Tp)
-			{
-				GSL_SET_COMPLEX(&z,sqrt(cell_diff)*p_p*gsl_matrix_get(re_pilot,k-K/DK,t),sqrt(cell_diff)*p_p*gsl_matrix_get(im_pilot,k-K/DK,t));
-			}
-			//下から二段目のpilot信号
-			else if(Pilot_flg == 0 && k >= K/DK && k < 2*K/DK && t >= Tp && t < 2*Tp)
-			{
-				GSL_SET_COMPLEX(&z,sqrt(cell_diff)*p_p*gsl_matrix_get(re_pilot,k-K/DK,t-Tp),sqrt(cell_diff)*p_p*gsl_matrix_get(im_pilot,k-K/DK,t-Tp));
-			}
-*/
 // DK=2のとき
+
 			//右上のpilot信号
 			else if(Pilot_flg == 0 && k < K/DK && gsl_matrix_get(pilot,k,t)==1)
 			{
@@ -195,26 +179,29 @@ void init_x()
 			}
 
 			//下のpilot信号 contaminationの場合
-			else if(Pilot_flg == 2 && k >= K/DK)
+			else if(Pilot_flg == 2 && k < K/DK && gsl_matrix_get(pilot,k,t)==1)
+			{				
+				GSL_SET_COMPLEX(&z,p_p*gsl_matrix_get(re_pilot,k,t),p_p*gsl_matrix_get(im_pilot,k,t));
+			}
+			else if(Pilot_flg == 2 && k >= K/DK && gsl_matrix_get(pilot,k,t)==1)
 			{
-				z = gsl_matrix_complex_get(x,k-K/DK,t);
+				int cell_num = k/(K/DK);
+				z = gsl_matrix_complex_get(x,k-cell_num*K/DK,t);
+				// z.dat[0] = sqrt(cell_diff) * z.dat[0];
+				// z.dat[1] = sqrt(cell_diff) * z.dat[1];
 			}
 			else 
 			{
-/*
-				if(rho_k > gsl_rng_uniform(RAN)){
-					if(k < K/DK){
-						GSL_SET_COMPLEX(&z,a_k*tmp[UniformBit()],a_k*tmp[UniformBit()]);
-					}
-					else{
-						GSL_SET_COMPLEX(&z,sqrt(cell_diff)*a_k*tmp[UniformBit()],sqrt(cell_diff)*a_k*tmp[UniformBit()]);
-					}
-				}
-				else GSL_SET_COMPLEX(&z,0,0);
-*/
 				//permutationする
 				//sync
 				if(Pilot_flg == 1)
+				{
+						GSL_SET_COMPLEX(&z,
+							a_k*data_tmp[t-Tp]*tmp[UniformBit()],
+							a_k*data_tmp[t-Tp]*tmp[UniformBit()]);
+				}
+				//contamination
+				else if(Pilot_flg == 2)
 				{
 						GSL_SET_COMPLEX(&z,
 							a_k*data_tmp[t-Tp]*tmp[UniformBit()],
@@ -237,6 +224,7 @@ void init_x()
 
 			gsl_matrix_complex_set(x,k,t,z);
 		}
+		
 	}
 	free(re_pilot);
 	free(im_pilot);
@@ -244,7 +232,7 @@ void init_x()
 	free(data);
 	free(data_tmp);
 
-	// PrintRealMatrix(stdout,K,T,pilot);
+	// PrintMatrix(stdout,K,T,x);
 	// PrintRealMatrix(stdout,size,size,im_pilot);
 }
 
@@ -256,9 +244,31 @@ void init_w()
 		for (t = 0; t < T; ++t)
 		{
 			gsl_complex z = GSLComplexGaussianNoise(sqrt(N0));
-			// GSL_SET_COMPLEX(&z,1,1);
+			// GSL_SET_COMPLEX(&z,0,0);
 			gsl_matrix_complex_set(w,n,t,z);
 		}
+	}
+}
+
+void init_d()
+{
+	int k,l;
+	for (k = 0; k < K/DK; ++k)
+	{
+		// for (l = 0; l < K/DK; ++l)
+		// {
+			gsl_complex z,z_other;
+			GSL_SET_COMPLEX(&z,Pk,0);
+			GSL_SET_COMPLEX(&z_other,Pk*cell_diff,0);
+			gsl_matrix_complex_set(D,k,k,z);
+		// }
+	}
+	for (k = 0; k < K; ++k)
+	{
+		gsl_complex z;
+		if(k<K/DK) GSL_SET_COMPLEX(&z,Pk,0);
+		else GSL_SET_COMPLEX(&z,Pk*cell_diff,0);
+		gsl_matrix_complex_set(D_large,k,k,z);
 	}
 }
 
@@ -283,53 +293,6 @@ void init_user_p()
 
 }
 
-void init_xi_first()
-{
-	int i,j;
-	for (i = 0; i < K; ++i)
-	{
-		for (j = 0; j < T; ++j)
-		{
-			double tmp[2] = {Pk,0.0};
-			int index = (int)gsl_matrix_get(pilot,i,j);
-			if(j >= Tp && j < (T-Tp) && Pilot_flg==0)index = 1;
-			else if(Pilot_flg==1)index = 1;
-			gsl_matrix_set(xi ,i,j,tmp[index]);
-			// gsl_matrix_set(xi ,i,j,Pk);
-			// gsl_matrix_set(xi ,i,j,tmp[index]);
-		}
-	}
-	// PrintRealMatrix(stdout,K,T,xi);
-}
-void init_xi()
-{
-	int i,j;
-	for (i = 0; i < K; ++i)
-	{
-		for (j = 0; j < T; ++j)
-		{
-			double tmp[2] = {Pk,0.0};
-			// double tmp[2] = {Pk/(double)N,0.0};
-			int index = (int)gsl_matrix_get(pilot,i,j);
-			// if(j >= Tp && j < (T-Tp))index = 1;
-			gsl_matrix_set(xi ,i,j,tmp[index]);
-			// gsl_matrix_set(xi ,i,j,Pk);
-		}
-	}
-	// PrintRealMatrix(stdout,K,T,xi);
-}
-
-void init_eta()
-{
-	int i,j;
-	for (i = 0; i < N; ++i)
-	{
-		for (j = 0; j < K; ++j)
-		{
-			gsl_matrix_set(eta ,i,j,1.0/(double)N);
-		}
-	}
-}
 
 void init_x_h()
 {
@@ -337,15 +300,14 @@ void init_x_h()
 	gsl_complex def;
 	def.dat[0] = 0.0;
 	def.dat[1] = 0.0;
-	
 	for (k = 0; k < K; ++k)
 	{
-		a_k = sqrt(user_p[k]/(2*rho_k));
 		for (t = 0; t < T; ++t)
 		{
 			if(gsl_matrix_get(pilot,k,t) == 1)
 			{
 				gsl_matrix_complex_set(x_h,k,t,gsl_matrix_complex_get(x,k,t));
+				
 			}
 			else 
 			{
@@ -355,44 +317,46 @@ void init_x_h()
 	}
 }
 
-void init_zeta()
-{
-	int n,t;
-	for (n = 0; n < N; ++n)
-	{
-		for (t = 0; t < T; ++t)
-		{
-			gsl_matrix_set(zeta_c,n,t,N0);
-			gsl_matrix_set(zeta_d,n,t,N0);
-		}
-	}
-}
 
 void init(double sn)
 {
 	int i,j;
 	
-	// N0 = Pk/(double)sn;
 	N0 = pow(10.0,-1.0*sn/10.0);
 	x = gsl_matrix_complex_calloc(K,T);
 	h = gsl_matrix_complex_calloc(N,K);
 	w = gsl_matrix_complex_calloc(N,T);
 	y = gsl_matrix_complex_calloc(N,T);
 
-	z_c = gsl_matrix_complex_calloc(N,T);
-	z_d = gsl_matrix_complex_calloc(N,T);
+	Z = gsl_vector_complex_calloc(K/DK);
 
 	x_h = gsl_matrix_complex_calloc(K,T);
-	x_h_abs2 = gsl_matrix_calloc(K,T);
-	xi = gsl_matrix_calloc(K,T);
-	h_h = gsl_matrix_complex_calloc(N,K);
-	h_h_abs2 = gsl_matrix_calloc(N,K);
-	eta = gsl_matrix_calloc(N,K);
+	x_h_sub = gsl_matrix_complex_calloc(K/DK,T);
 
-	zeta_c = gsl_matrix_calloc(N,T);
-	zeta_d = gsl_matrix_calloc(N,T);
+	h_h = gsl_matrix_complex_calloc(N,K);
 
 	pilot = gsl_matrix_calloc(K,T);
+
+	s = gsl_matrix_complex_calloc(N, K/DK);
+	y_sub = gsl_matrix_complex_calloc(K/DK, T);
+	h_sub = gsl_matrix_complex_calloc(K/DK, K);
+	h_sub_true = gsl_matrix_complex_calloc(K/DK, K);
+
+	R_x = gsl_matrix_complex_calloc(K/DK,K/DK);
+	R_a = gsl_matrix_complex_calloc(K/DK,K/DK);
+
+    x_kro = gsl_matrix_complex_calloc((K/DK)*(K/DK),K/DK);
+    x_kro_conju = gsl_matrix_complex_calloc((K/DK)*(K/DK),K/DK);
+
+	D = gsl_matrix_complex_calloc(K/DK, K/DK);
+	D_other = gsl_matrix_complex_calloc(K/DK, K/DK);
+	D_large = gsl_matrix_complex_calloc(K, K);
+	g = gsl_vector_complex_calloc((K/DK)*(K/DK));
+	G = gsl_matrix_complex_calloc((K/DK),(K/DK));
+	G_ans = gsl_matrix_complex_calloc(N,(K/DK));
+	P = gsl_matrix_complex_calloc((K/DK)*(K/DK),(K/DK)*(K/DK));
+
+	inno = gsl_vector_complex_calloc(K/DK);
 
 	user_p  = (double *)malloc( sizeof(double) *K );
 
@@ -402,10 +366,7 @@ void init(double sn)
 	init_user_p();
 
 	//通信路h初期化
-	init_h(1/sqrt(N));
-
-	//zeta初期化
-	init_zeta();
+	init_h();
 
 	//pilot信号の初期化　pilotの場合...0 他...1
 	init_pilot();
@@ -413,33 +374,21 @@ void init(double sn)
 	//入力値xの初期化 pilot信号をx_hにも代入
 	init_x();
 
+	//Dの初期化 large scale fading
+	init_d();
+
+	// PrintMatrix(stdout,N,K,h);
+	AB(h,D_large,h_h);
+	
 	//雑音wの初期化
 	init_w();
 
 	//行列計算　y = hx/sqrt(N) + w
-	gsl_complex tmp1;
-	// GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
-	// gsl_matrix_complex_scale(h,tmp1);
-	AB(h,x,y);
-	gsl_matrix_complex_add(y,w);
-	
-	// AB(h,x,y);
+	AB(h_h,x,y);
 	// gsl_complex tmp1;
 	// GSL_SET_COMPLEX(&tmp1,1/sqrt(N),0);
 	// gsl_matrix_complex_scale(y,tmp1);
-	// gsl_matrix_complex_add(y,w);
-	
-
-	// PrintMatrix(stdout,N,K,h);
-	// PrintMatrix(stdout,K,T,x);
-	// PrintMatrix(stdout,N,T,w);
-	// PrintMatrix(stdout,N,T,y);
+	gsl_matrix_complex_add(y,w);
 
 	init_x_h();
-	
-	// init xi
-	init_xi();
-	//init eta
-	init_eta();
-
 }
